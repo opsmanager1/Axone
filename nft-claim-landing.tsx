@@ -412,7 +412,7 @@ const generateImage = async (prompt: string) => {
           </div>
           <div className="flex space-x-6">
             <a
-              href="https://twitter.com/warden_xyz"
+              href="https://x.com/0psmanager"
               target="_blank"
               rel="noopener noreferrer"
               className="text-lg hover:text-blue-500 transition-colors"
@@ -420,14 +420,14 @@ const generateImage = async (prompt: string) => {
               Twitter
             </a>
             <a
-              href="https://github.com/warden"
+              href="https://github.com/opsmanager1"
               target="_blank"
               rel="noopener noreferrer"
               className="text-lg hover:text-gray-700 transition-colors"
             >
               GitHub
             </a>
-            <a href="mailto:support@warden.xyz" className="text-lg hover:text-green-500 transition-colors">
+            <a href="mailto:opsmanager133@gmail.com" className="text-lg hover:text-green-500 transition-colors">
               Contact
             </a>
           </div>
