@@ -408,7 +408,7 @@ const generateImage = async (prompt: string) => {
       <footer className={`p-6 ${isDarkMode ? "bg-black text-white" : "bg-gray-100 text-black"} mt-auto`}>
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <p className="text-sm font-semibold">© 2025 Warden. All Rights Reserved.</p>
+            <p className="text-sm font-semibold">© 2025 BITNODES. All Rights Reserved.</p>
           </div>
           <div className="flex space-x-6">
             <a
@@ -433,7 +433,7 @@ const generateImage = async (prompt: string) => {
           </div>
         </div>
         <div className="mt-4 text-center text-xs">
-          <p className="text-gray-500">Powered by Warden AI Generator. Designed with ❤️ by the Warden Team.</p>
+          <p className="text-gray-500">Powered by WARDEN protocol chain AI Generator. Designed with ❤️ by the BITNODES Team.</p>
         </div>
       </footer>
     </div>
