@@ -120,8 +120,6 @@ export default function NFTClaimLanding() {
     setIsDarkMode(!isDarkMode);
   };
 
-  import { SigningStargateClient } from "@cosmjs/stargate";
-
 const handleGenerateImage = async () => {
   if (!prompt) return;
   setIsGenerating(true);
