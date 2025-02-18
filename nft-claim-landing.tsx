@@ -347,13 +347,17 @@ export default function NFTClaimLanding() {
               className={`${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"} border-gray-600`}
             />
             <Button
-              onClick={handleGenerateImage}
-              disabled={isGenerating || !prompt || !isWalletConnected || !isCorrectNetwork}
-              variant={isDarkMode ? "outline" : "default"}
-              className={`${isDarkMode ? "bg-gray-800 hover:bg-gray-700 text-white" : "bg-white hover:bg-gray-100 text-black"} transition-colors`}
-            >
-              {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Generate"}
-            </Button>
+  onClick={handleGenerateImage}
+  disabled={isGenerating || !prompt || !isWalletConnected || !isCorrectNetwork}
+  variant={isDarkMode ? "outline" : "default"}
+  className={`border ${
+    isDarkMode
+      ? "bg-gray-800 hover:bg-gray-700 text-white border-gray-600"
+      : "bg-gray-100 hover:bg-gray-200 text-black border-gray-300"
+  } transition-colors`}
+>
+  {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Generate"}
+</Button>
           </div>
           {!isCorrectNetwork && isWalletConnected && (
             <p className="text-red-500 text-center">
