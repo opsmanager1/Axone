@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const HUGGING_FACE_API_KEY = "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";
 const GENERATION_PRICE = 1;
 const AXONE_CHAIN_ID = "axone-dentrite-1"; // Keplr network chain ID (Axone Protocol Testnet)
-const RECIPIENT_ADDRESS = "axone1mtp47d2uyu9g89tfh2ghtey7f9a4lj8f9rg9x4"; // Update with your Axone recipient address
+const RECIPIENT_ADDRESS = "axone1recipientaddress"; // Update with your Axone recipient address
 const RPC_URL = "https://api.dentrite.axone.xyz:443/rpc";
 const REST_URL = "https://api.dentrite.axone.xyz";
 
@@ -177,8 +177,8 @@ export default function NFTClaimLanding() {
       };
 
       const signDoc = {
-        bodyBytes: txBody,
-        authInfoBytes: authInfo,
+        bodyBytes: new TextEncoder().encode(JSON.stringify(txBody)),
+        authInfoBytes: new TextEncoder().encode(JSON.stringify(authInfo)),
         chainId: AXONE_CHAIN_ID,
         accountNumber: accountNumber.toString(),
       };
@@ -186,8 +186,8 @@ export default function NFTClaimLanding() {
       const { signed, signature } = await window.keplr.signDirect(AXONE_CHAIN_ID, senderAddress, signDoc);
 
       const txRaw = {
-        bodyBytes: signed.bodyBytes,
-        authInfoBytes: signed.authInfoBytes,
+        body_bytes: signed.bodyBytes,
+        auth_info_bytes: signed.authInfoBytes,
         signatures: [signature.signature],
       };
 
@@ -230,7 +230,7 @@ export default function NFTClaimLanding() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        tx_bytes: Buffer.from(txRaw).toString("base64"),
+        tx_bytes: Buffer.from(JSON.stringify(txRaw), "utf-8").toString("base64"),
         mode: "BROADCAST_MODE_SYNC",
       }),
     });
