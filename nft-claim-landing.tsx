@@ -280,11 +280,11 @@ export default function NFTClaimLanding() {
           <Avatar>
             <AvatarImage
               src="https://pbs.twimg.com/profile_images/1890424736359882753/NmjlHv3T_400x400.jpg"
-              alt="Warden"
+              alt="Axone"
             />
             <AvatarFallback>WD</AvatarFallback>
           </Avatar>
-          <h1 className="text-2xl font-bold tracking-tight italic">Warden AI tool</h1>
+          <h1 className="text-2xl font-bold tracking-tight italic">Axone AI tool</h1>
         </div>
         <div className="flex items-center space-x-4">
           <Sun className="h-4 w-4" />
@@ -414,7 +414,7 @@ export default function NFTClaimLanding() {
           </div>
         </div>
         <div className="mt-4 text-center text-xs">
-          <p className="text-gray-500">Powered by WARDEN protocol chain AI Generator. Designed with ❤️ by the BITNODES Team.</p>
+          <p className="text-gray-500">Powered by AXONE protocol chain AI Generator. Designed with ❤️ by the BITNODES Team.</p>
         </div>
       </footer>
     </div>
