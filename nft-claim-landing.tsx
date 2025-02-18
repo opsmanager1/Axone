@@ -139,21 +139,37 @@ export default function NFTClaimLanding() {
 
       console.log(`💳 Sender: ${senderAddress}`);
 
-      const transactionParameters = {
-        from: senderAddress,
-        to: RECIPIENT_ADDRESS, // Update with your Axone recipient address
-        amount: [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }],
+      const amount = [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }];
+      const fee = {
+        amount: [{ denom: "uaxone", amount: "5000" }],
         gas: "200000", // Adjust the gas limit as needed
       };
+      const chainId = AXONE_CHAIN_ID;
 
-      console.log("📤 Sending transaction...", transactionParameters);
+      const result = await window.keplr.signAndBroadcast(
+        chainId,
+        senderAddress,
+        [
+          {
+            type: "cosmos-sdk/MsgSend",
+            value: {
+              from_address: senderAddress,
+              to_address: RECIPIENT_ADDRESS,
+              amount: amount,
+            },
+          },
+        ],
+        fee
+      );
 
-      const txHash = await window.keplr.sendTx(AXONE_CHAIN_ID, transactionParameters);
+      if (result.code !== undefined && result.code !== 0) {
+        throw new Error(`Failed to send tx: ${result.log || result.raw_log}`);
+      }
 
-      console.log(`✅ Transaction sent! TX: https://api.dentrite.axone.xyz/tx/${txHash}`);
-      alert(`✅ Transaction sent!\nTX Hash: ${txHash}`);
+      console.log(`✅ Transaction sent! TX: ${result.transactionHash}`);
+      alert(`✅ Transaction sent!\nTX Hash: ${result.transactionHash}`);
 
-      await waitForTransaction(txHash);
+      await waitForTransaction(result.transactionHash);
 
       console.log("🖼️ Generating image...");
       await generateImage(prompt);
@@ -168,6 +184,7 @@ export default function NFTClaimLanding() {
 
   const waitForTransaction = async (txHash: string) => {
     while (true) {
+      // Assuming a function window.keplr.getTransactionReceipt is available to get transaction status
       const receipt = await window.keplr.getTransactionReceipt(txHash);
 
       if (receipt && receipt.status === "success") {
