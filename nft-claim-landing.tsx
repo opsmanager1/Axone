@@ -274,7 +274,7 @@ export default function NFTClaimLanding() {
   return (
     <div className={`flex flex-col min-h-screen ${isDarkMode ? "bg-black" : "bg-white"}`}>
       <nav
-        className={`flex justify-between items-center p-4 bg-[rgba(202,255,148,.9)] text-black sticky top-0 z-10 rounded-b-lg shadow-md`}
+        className={`flex justify-between items-center p-4 ${isDarkMode ? "bg-[#003366]" : "bg-[#003366]"} text-black sticky top-0 z-10 rounded-b-lg shadow-md`}
       >
         <div className="flex items-center space-x-2">
           <Avatar>
