@@ -45,24 +45,31 @@ export default function NFTClaimLanding() {
   };
 
   const handleConnectWallet = async () => {
-    if (typeof window.keplr !== "undefined") {
-      try {
-        const isCorrect = await checkNetwork();
-        if (!isCorrect) {
-          alert("Please switch to the Axone network.");
-          return;
-        }
-        const accounts = await window.getAccounts();
+  if (window.getOfflineSigner) {
+    try {
+      // Убедитесь, что пользователь находится в нужной сети
+      const chainId = AXONE_CHAIN_ID; // Например, Axone Testnet
+      await window.keplr.enable(chainId);
+
+      // Получаем учетные записи из Keplr
+      const offlineSigner = window.getOfflineSigner(chainId);
+      const accounts = await offlineSigner.getAccounts();
+
+      if (accounts.length > 0) {
         setWalletAddress(accounts[0].address);
         setIsWalletConnected(true);
         setIsCorrectNetwork(true);
-      } catch (error) {
-        console.error("Failed to connect wallet:", error);
+      } else {
+        alert("No accounts found in Keplr.");
       }
-    } else {
-      alert("Please install Kepler wallet!");
+    } catch (error) {
+      console.error("Failed to connect Keplr:", error);
+      alert("Failed to connect to Keplr. Please try again.");
     }
-  };
+  } else {
+    alert("Please install Keplr!");
+  }
+};
 
   const handleLogout = () => {
     setIsWalletConnected(false);
