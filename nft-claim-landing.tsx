@@ -92,7 +92,8 @@ export default function NFTClaimLanding() {
         return;
       }
 
-      const accounts = await window.getAccounts();
+      const offlineSigner = window.getOfflineSigner(AXONE_CHAIN_ID);
+      const accounts = await offlineSigner.getAccounts();
       const senderAddress = accounts[0].address;
 
       if (!senderAddress) {
