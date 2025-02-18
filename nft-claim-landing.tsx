@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const HUGGING_FACE_API_KEY = "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"
 const GENERATION_PRICE = 1;
 const AXONE_CHAIN_ID = "axone-dentrite-1"; // Keplr network chain ID (Axone Protocol Testnet)
+const RECIPIENT_ADDRESS = "axone1recipientaddress"; // Update with your Axone recipient address
 
 export default function NFTClaimLanding() {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
@@ -140,7 +141,7 @@ export default function NFTClaimLanding() {
 
       const transactionParameters = {
         from: senderAddress,
-        to: "axone1recipientaddress", // Update with your Axone recipient address
+        to: RECIPIENT_ADDRESS, // Update with your Axone recipient address
         amount: [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }],
         gas: "200000", // Adjust the gas limit as needed
       };
@@ -411,4 +412,3 @@ export default function NFTClaimLanding() {
     </div>
   );
 }
-
