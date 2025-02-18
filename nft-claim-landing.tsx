@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const HUGGING_FACE_API_KEY = "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"
 const GENERATION_PRICE = 1;
-const AXONE_CHAIN_ID = "axone-dentrite-1"; // Kepler network chain ID (Axone Protocol Testnet)
+const AXONE_CHAIN_ID = "axone-dentrite-1"; // Keplr network chain ID (Axone Protocol Testnet)
 
 export default function NFTClaimLanding() {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
@@ -26,6 +26,53 @@ export default function NFTClaimLanding() {
     const enableKeplr = async () => {
       if (typeof window.keplr !== "undefined") {
         try {
+          await window.keplr.experimentalSuggestChain({
+            chainId: AXONE_CHAIN_ID,
+            chainName: "Axone testnet",
+            rpc: "https://api.dentrite.axone.xyz:443/rpc",
+            rest: "https://api.dentrite.axone.xyz",
+            bip44: {
+              coinType: 118,
+            },
+            bech32Config: {
+              bech32PrefixAccAddr: "axone",
+              bech32PrefixAccPub: "axonepub",
+              bech32PrefixValAddr: "axonevaloper",
+              bech32PrefixValPub: "axonevaloperpub",
+              bech32PrefixConsAddr: "axonevalcons",
+              bech32PrefixConsPub: "axonevalconspub",
+            },
+            currencies: [
+              {
+                coinDenom: "AXONE",
+                coinMinimalDenom: "uaxone",
+                coinDecimals: 6,
+                coinGeckoId: "unknown",
+              },
+            ],
+            feeCurrencies: [
+              {
+                coinDenom: "AXONE",
+                coinMinimalDenom: "uaxone",
+                coinDecimals: 6,
+                coinGeckoId: "unknown",
+                gasPriceStep: {
+                  low: 0.01,
+                  average: 0.025,
+                  high: 0.03,
+                },
+              },
+            ],
+            stakeCurrency: {
+              coinDenom: "AXONE",
+              coinMinimalDenom: "uaxone",
+              coinDecimals: 6,
+              coinGeckoId: "unknown",
+            },
+            features: [],
+            beta: true,
+          });
+
           await window.keplr.enable(AXONE_CHAIN_ID);
           const chainId = await window.keplr.getChainId();
           setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
@@ -41,9 +88,14 @@ export default function NFTClaimLanding() {
 
   const checkNetwork = async () => {
     if (typeof window.keplr !== "undefined") {
-      const chainId = await window.keplr.getChainId();
-      setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
-      return chainId === AXONE_CHAIN_ID;
+      try {
+        const chainId = await window.keplr.getChainId();
+        setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
+        return chainId === AXONE_CHAIN_ID;
+      } catch (error) {
+        console.error("Error checking network:", error);
+        return false;
+      }
     }
     return false;
   };
@@ -105,15 +157,16 @@ export default function NFTClaimLanding() {
 
       const transactionParameters = {
         from: senderAddress,
-        to: "cosmos1recipientaddress", // Update with your Cosmos recipient address
-        amount: GENERATION_PRICE, // Amount in tokens for generation
+        to: "axone1recipientaddress", // Update with your Axone recipient address
+        amount: [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }],
+        gas: "200000", // Adjust the gas limit as needed
       };
 
       console.log("📤 Sending transaction...", transactionParameters);
 
-      const txHash = await window.keplr.sendTransaction(AXONE_CHAIN_ID, transactionParameters);
+      const txHash = await window.keplr.sendTx(AXONE_CHAIN_ID, transactionParameters);
 
-      console.log(`✅ Transaction sent! TX: https://explorer.keplr.app/tx/${txHash}`);
+      console.log(`✅ Transaction sent! TX: https://api.dentrite.axone.xyz/tx/${txHash}`);
       alert(`✅ Transaction sent!\nTX Hash: ${txHash}`);
 
       await waitForTransaction(txHash);
@@ -134,11 +187,11 @@ export default function NFTClaimLanding() {
       const receipt = await window.keplr.getTransactionReceipt(txHash);
 
       if (receipt && receipt.status === "success") {
-        console.log(`✅ Transaction confirmed! TX: https://explorer.keplr.app/tx/${txHash}`);
+        console.log(`✅ Transaction confirmed! TX: https://api.dentrite.axone.xyz/tx/${txHash}`);
         alert(`✅ Transaction confirmed!\nTX Hash: ${txHash}`);
         return;
       } else if (receipt && receipt.status === "failure") {
-        console.log(`❌ Transaction failed! TX: https://explorer.keplr.app/tx/${txHash}`);
+        console.log(`❌ Transaction failed! TX: https://api.dentrite.axone.xyz/tx/${txHash}`);
         alert(`❌ Transaction failed!\nTX Hash: ${txHash}`);
         return;
       }
