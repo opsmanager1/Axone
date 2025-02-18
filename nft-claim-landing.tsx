@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const HUGGING_FACE_API_KEY = "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"
 const GENERATION_PRICE = 1;
 const AXONE_CHAIN_ID = "axone-dentrite-1"; // Keplr network chain ID (Axone Protocol Testnet)
-const RECIPIENT_ADDRESS = "axone1recipientaddress"; // Update with your Axone recipient address
+const RECIPIENT_ADDRESS = "axone1mtp47d2uyu9g89tfh2ghtey7f9a4lj8f9rg9x4"; // Update with your Axone recipient address
 const RPC_URL = "https://api.dentrite.axone.xyz:443/rpc";
 const REST_URL = "https://api.dentrite.axone.xyz";
 
@@ -177,17 +177,17 @@ export default function NFTClaimLanding() {
       };
 
       const signDoc = {
-        body_bytes: txBody,
-        auth_info_bytes: authInfo,
-        chain_id: AXONE_CHAIN_ID,
-        account_number: accountNumber.toString(),
+        bodyBytes: txBody,
+        authInfoBytes: authInfo,
+        chainId: AXONE_CHAIN_ID,
+        accountNumber: accountNumber.toString(),
       };
 
       const { signed, signature } = await window.keplr.signDirect(AXONE_CHAIN_ID, senderAddress, signDoc);
 
       const txRaw = {
-        body_bytes: signed.body_bytes,
-        auth_info_bytes: signed.auth_info_bytes,
+        bodyBytes: signed.bodyBytes,
+        authInfoBytes: signed.authInfoBytes,
         signatures: [signature.signature],
       };
 
