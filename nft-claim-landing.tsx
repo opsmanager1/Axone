@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -8,10 +8,10 @@ import { Sun, Moon, Loader2, Copy, Check } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const HUGGING_FACE_API_KEY = "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"
+const HUGGING_FACE_API_KEY = "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";
 const GENERATION_PRICE = 1;
 const AXONE_CHAIN_ID = "axone-dentrite-1"; // Keplr network chain ID (Axone Protocol Testnet)
-const RECIPIENT_ADDRESS = "axone1mtp47d2uyu9g89tfh2ghtey7f9a4lj8f9rg9x4"; // Update with your Axone recipient address
+const RECIPIENT_ADDRESS = "axone1recipientaddress"; // Update with your Axone recipient address
 const RPC_URL = "https://api.dentrite.axone.xyz:443/rpc";
 const REST_URL = "https://api.dentrite.axone.xyz";
 
@@ -194,7 +194,7 @@ export default function NFTClaimLanding() {
       const result = await broadcastTx(txRaw);
 
       if (result.code !== undefined && result.code !== 0) {
-        throw new Error(`Failed to send tx: ${result.log || result.raw_log}`);
+        throw new Error(`Failed to send tx: ${result.raw_log}`);
       }
 
       console.log(`✅ Transaction sent! TX: ${result.txhash}`);
@@ -230,7 +230,7 @@ export default function NFTClaimLanding() {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        tx_bytes: txRaw,
+        tx_bytes: Buffer.from(txRaw).toString("base64"),
         mode: "BROADCAST_MODE_SYNC",
       }),
     });
@@ -422,13 +422,13 @@ export default function NFTClaimLanding() {
               Please switch to the Axone network to use this dApp.
               <Button
                 onClick={async () => {
-                  console.log("Switch Network button clicked")
-                  const switched = await switchNetwork()
+                  console.log("Switch Network button clicked");
+                  const switched = await switchNetwork();
                   if (switched) {
-                    console.log("Network switched successfully")
-                    setIsCorrectNetwork(true)
+                    console.log("Network switched successfully");
+                    setIsCorrectNetwork(true);
                   } else {
-                    console.log("Failed to switch network")
+                    console.log("Failed to switch network");
                   }
                 }}
                 variant="link"
