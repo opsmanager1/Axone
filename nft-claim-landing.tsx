@@ -25,7 +25,7 @@ export default function NFTClaimLanding() {
   useEffect(() => {
     if (typeof window.keplr !== "undefined") {
       window.keplr.enable(AXONE_CHAIN_ID).then(() => {
-        const chainId = window.getChainId();
+        const chainId = await window.keplr.getChainId();
         setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
       });
     }
@@ -37,7 +37,7 @@ export default function NFTClaimLanding() {
 
   const checkNetwork = async () => {
     if (typeof window.keplr !== "undefined") {
-      const chainId = window.getChainId();
+      const chainId = await window.keplr.getChainId();
       setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
       return chainId === AXONE_CHAIN_ID;
     }
