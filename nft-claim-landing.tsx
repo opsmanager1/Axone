@@ -23,8 +23,8 @@ export default function NFTClaimLanding() {
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
 
   useEffect(() => {
-    if (typeof window.keplr !== "undefined") {
-      const enableKeplr = async () => {
+    const enableKeplr = async () => {
+      if (typeof window.keplr !== "undefined") {
         try {
           await window.keplr.enable(AXONE_CHAIN_ID);
           const chainId = await window.keplr.getChainId();
@@ -32,9 +32,11 @@ export default function NFTClaimLanding() {
         } catch (error) {
           console.error("Error enabling Keplr:", error);
         }
-      };
-      enableKeplr();
-    }
+      } else {
+        console.error("Keplr not found. Please install Keplr extension.");
+      }
+    };
+    enableKeplr();
   }, []);
 
   const checkNetwork = async () => {
@@ -64,7 +66,7 @@ export default function NFTClaimLanding() {
         alert("Failed to connect to Keplr. Please try again.");
       }
     } else {
-      alert("Please install Keplr!");
+      alert("Keplr not found. Please install Keplr extension.");
     }
   };
 
@@ -84,7 +86,7 @@ export default function NFTClaimLanding() {
 
     try {
       if (!window.keplr) {
-        alert("❌ Kepler wallet not found!");
+        alert("❌ Keplr wallet not found!");
         setIsGenerating(false);
         return;
       }
@@ -111,7 +113,7 @@ export default function NFTClaimLanding() {
 
       const txHash = await window.keplr.sendTransaction(AXONE_CHAIN_ID, transactionParameters);
 
-      console.log(`✅ Transaction sent! TX: https://explorer.kepler.app/tx/${txHash}`);
+      console.log(`✅ Transaction sent! TX: https://explorer.keplr.app/tx/${txHash}`);
       alert(`✅ Transaction sent!\nTX Hash: ${txHash}`);
 
       await waitForTransaction(txHash);
@@ -132,11 +134,11 @@ export default function NFTClaimLanding() {
       const receipt = await window.keplr.getTransactionReceipt(txHash);
 
       if (receipt && receipt.status === "success") {
-        console.log(`✅ Transaction confirmed! TX: https://explorer.kepler.app/tx/${txHash}`);
+        console.log(`✅ Transaction confirmed! TX: https://explorer.keplr.app/tx/${txHash}`);
         alert(`✅ Transaction confirmed!\nTX Hash: ${txHash}`);
         return;
       } else if (receipt && receipt.status === "failure") {
-        console.log(`❌ Transaction failed! TX: https://explorer.kepler.app/tx/${txHash}`);
+        console.log(`❌ Transaction failed! TX: https://explorer.keplr.app/tx/${txHash}`);
         alert(`❌ Transaction failed!\nTX Hash: ${txHash}`);
         return;
       }
@@ -233,11 +235,11 @@ export default function NFTClaimLanding() {
           <Avatar>
             <AvatarImage
               src="https://pbs.twimg.com/profile_images/1890424736359882753/NmjlHv3T_400x400.jpg"
-              alt="Axone"
+              alt="Warden"
             />
             <AvatarFallback>WD</AvatarFallback>
           </Avatar>
-          <h1 className="text-2xl font-bold tracking-tight italic">Axone AI tool</h1>
+          <h1 className="text-2xl font-bold tracking-tight italic">Warden AI tool</h1>
         </div>
         <div className="flex items-center space-x-4">
           <Sun className="h-4 w-4" />
@@ -308,7 +310,7 @@ export default function NFTClaimLanding() {
           </div>
           {!isCorrectNetwork && isWalletConnected && (
             <p className="text-red-500 text-center">
-              Please switch to the Axone network to use this dApp.
+              Please switch to the Warden network to use this dApp.
               <Button
                 onClick={async () => {
                   console.log("Switch Network button clicked")
@@ -367,10 +369,10 @@ export default function NFTClaimLanding() {
           </div>
         </div>
         <div className="mt-4 text-center text-xs">
-          <p className="text-gray-500">Powered by AXONE protocol chain AI Generator. Designed with ❤️ by the BITNODES Team.</p>
+          <p className="text-gray-500">Powered by WARDEN protocol chain AI Generator. Designed with ❤️ by the BITNODES Team.</p>
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
