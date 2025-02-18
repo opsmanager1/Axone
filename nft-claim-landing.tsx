@@ -1,294 +1,217 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { Input } from "@/components/ui/input"
-import { Sun, Moon, Loader2, Copy, Check } from "lucide-react"
-import Image from "next/image"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Sun, Moon, Loader2, Copy, Check } from "lucide-react";
+import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const HUGGING_FACE_API_KEY = "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"
-const GENERATION_PRICE = 1
-const AXONE_CHAIN_ID = "axone-dentrite-1" // 10010 в 16-ричном формате
+const GENERATION_PRICE = 1;
+const AXONE_CHAIN_ID = "axone-dentrite-1"; // Kepler network chain ID (Axone Protocol Testnet)
 
 export default function NFTClaimLanding() {
-  const [isWalletConnected, setIsWalletConnected] = useState(false)
-  const [isDarkMode, setIsDarkMode] = useState(true)
-  const [prompt, setPrompt] = useState("")
-  const [generatedImage, setGeneratedImage] = useState("")
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [walletAddress, setWalletAddress] = useState("")
-  const [isCopied, setIsCopied] = useState(false)
-  const [isCorrectNetwork, setIsCorrectNetwork] = useState(false)
+  const [isWalletConnected, setIsWalletConnected] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [prompt, setPrompt] = useState("");
+  const [generatedImage, setGeneratedImage] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [walletAddress, setWalletAddress] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
+  const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
 
   useEffect(() => {
-    if (typeof window.ethereum !== "undefined") {
-      window.ethereum.on("chainChanged", (chainId: string) => {
-        setIsCorrectNetwork(chainId === AXONE_CHAIN_ID)
-      })
+    if (typeof window.keplr !== "undefined") {
+      window.keplr.enable(AXONE_CHAIN_ID).then(() => {
+        const chainId = window.getChainId();
+        setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
+      });
     }
 
     return () => {
-      if (typeof window.ethereum !== "undefined") {
-        window.ethereum.removeListener("chainChanged", () => {})
-      }
-    }
-  }, [])
+      // Any cleanup can be done here if necessary.
+    };
+  }, []);
 
   const checkNetwork = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      const chainId = await window.ethereum.request({ method: "eth_chainId" })
-      setIsCorrectNetwork(chainId === AXONE_CHAIN_ID)
-      return chainId === AXONE_CHAIN_ID
+    if (typeof window.keplr !== "undefined") {
+      const chainId = window.getChainId();
+      setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
+      return chainId === AXONE_CHAIN_ID;
     }
-    return false
-  }
-
-  const switchNetwork = async () => {
-    if (typeof window.ethereum === "undefined") {
-      console.error("MetaMask is not installed")
-      alert("Please install MetaMask to use this feature")
-      return false
-    }
-
-    try {
-      await window.ethereum.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: AXONE_CHAIN_ID }],
-      })
-      console.log("Successfully switched to Axone network")
-      await checkNetwork()
-      return true
-    } catch (error: any) {
-      console.error("Error switching network:", error)
-      if (error.code === 4902) {
-        console.log("Axone network not found, attempting to add it")
-        return addAxoneNetwork()
-      } else {
-        alert("Failed to switch network. Please try again.")
-        return false
-      }
-    }
-  }
-
-  const addAxoneNetwork = async () => {
-    const chainParams = {
-      chainId: AXONE_CHAIN_ID,
-      chainName: "Axone Protocol Testnet",
-      rpcUrls: ["https://axone-rpc.bitnodes.xyz/"],
-      nativeCurrency: {
-        name: "WARD",
-        symbol: "WARD",
-        decimals: 18,
-      },
-      blockExplorerUrls: ["https://explorer.bitnodes.xyz/Axone%20testnet/"],
-    }
-
-    try {
-      await window.ethereum.request({
-        method: "wallet_addEthereumChain",
-        params: [chainParams],
-      })
-      console.log("Successfully added Axone network")
-      return true
-    } catch (error) {
-      console.error("Error adding Axone network:", error)
-      alert("Failed to add Axone network. Please try again or add it manually.")
-      return false
-    }
-  }
-
-  const handleConnectWallet = async () => {
-    if (typeof window.ethereum !== "undefined") {
-      try {
-        const isCorrect = await checkNetwork()
-        if (!isCorrect) {
-          const switched = await switchNetwork()
-          if (!switched) {
-            alert("Please switch to the Axone network to use this dApp.")
-            return
-          }
-        }
-        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" })
-        setWalletAddress(accounts[0])
-        setIsWalletConnected(true)
-        setIsCorrectNetwork(true)
-      } catch (error) {
-        console.error("Failed to connect wallet:", error)
-      }
-    } else {
-      alert("Please install MetaMask!")
-    }
-  }
-
-  const handleLogout = () => {
-    setIsWalletConnected(false)
-    setWalletAddress("")
-    setIsCorrectNetwork(false)
-  }
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode)
-  }
-
-  const handleGenerateImage = async () => {
-  if (!prompt) return;
-  setIsGenerating(true);
-
-  try {
-    if (!window.ethereum) {
-      alert("❌ MetaMask not found!");
-      setIsGenerating(false);
-      return;
-    }
-
-    const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-    const senderAddress = accounts[0];
-
-    if (!senderAddress) {
-      alert("❌ Wallet not connected!");
-      setIsGenerating(false);
-      return;
-    }
-
-    console.log(`💳 Sender: ${senderAddress}`);
-
-    const transactionParameters = {
-      from: senderAddress,
-      to: "0xCF32aF2912554af15CE51fe0fA459b76E4Ea444D", // WARD recipient address
-      value: "0x" + (BigInt(GENERATION_PRICE * 10 ** 18)).toString(16), // Amount in WARD
-      gas: "0x5208", // Fixed gas price
-    };
-
-    console.log("📤 Sending transaction...", transactionParameters);
-
-    const txHash = await window.ethereum.request({
-      method: "eth_sendTransaction",
-      params: [transactionParameters],
-    });
-
-    console.log(`✅ Transaction sent! TX: https://explorer.wardenprotocol.org/tx/${txHash}`);
-    alert(`✅ Transaction sent!\nTX Hash: ${txHash}`);
-
-    // Waiting for transaction confirmation
-    await waitForTransaction(txHash);
-
-    console.log("🖼️ Generating image...");
-    await generateImage(prompt);
-
-  } catch (error: any) {
-    console.error("❌ Error during generation:", error);
-    alert("Generation error: " + (error.message || "Unknown error"));
-  } finally {
-    setIsGenerating(false);
-  }
-};
-
-// Function to wait for transaction confirmation
-const waitForTransaction = async (txHash: string) => {
-  while (true) {
-    const receipt = await window.ethereum.request({
-      method: "eth_getTransactionReceipt",
-      params: [txHash],
-    });
-
-    if (receipt && receipt.status === "0x1") {
-      console.log(`✅ Transaction confirmed! TX: https://explorer.wardenprotocol.org/tx/${txHash}`);
-      alert(`✅ Transaction confirmed!\nTX Hash: ${txHash}`);
-      return;
-    } else if (receipt && receipt.status === "0x0") {
-      console.log(`❌ Transaction failed! TX: https://explorer.wardenprotocol.org/tx/${txHash}`);
-      alert(`❌ Transaction failed!\nTX Hash: ${txHash}`);
-      return;
-    }
-
-    await new Promise((resolve) => setTimeout(resolve, 3000)); // Check every 3 seconds
-  }
-};
-
-// Function to generate image via Hugging Face API
-const generateImage = async (prompt: string) => {
-  setIsGenerating(true);
-
-  const API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2";
-  const headers = {
-    Authorization: `Bearer ${HUGGING_FACE_API_KEY}`,
-    "Content-Type": "application/json",
+    return false;
   };
 
-  const requestBody = JSON.stringify({ inputs: prompt });
-
-  let attempts = 3; // Number of attempts
-  while (attempts > 0) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 sec timeout
-
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers,
-        body: requestBody,
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      console.log("🔄 Response from Hugging Face API:", response);
-
-      if (!response.ok) {
-        const errorJson = await response.json().catch(() => null);
-        const errorMessage = errorJson?.error || `Error ${response.status}: ${response.statusText}`;
-        console.error("❌ Hugging Face API error:", errorMessage);
-
-        if (response.status === 503 && attempts > 1) {
-          console.warn("⏳ Server overloaded, retrying...");
-          await new Promise((res) => setTimeout(res, 5000)); // Wait before retrying
-          attempts--;
-          continue;
+  const handleConnectWallet = async () => {
+    if (typeof window.keplr !== "undefined") {
+      try {
+        const isCorrect = await checkNetwork();
+        if (!isCorrect) {
+          alert("Please switch to the Axone network.");
+          return;
         }
+        const accounts = await window.getAccounts();
+        setWalletAddress(accounts[0].address);
+        setIsWalletConnected(true);
+        setIsCorrectNetwork(true);
+      } catch (error) {
+        console.error("Failed to connect wallet:", error);
+      }
+    } else {
+      alert("Please install Kepler wallet!");
+    }
+  };
 
-        throw new Error(errorMessage);
+  const handleLogout = () => {
+    setIsWalletConnected(false);
+    setWalletAddress("");
+    setIsCorrectNetwork(false);
+  };
+
+  const toggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+  };
+
+  const handleGenerateImage = async () => {
+    if (!prompt) return;
+    setIsGenerating(true);
+
+    try {
+      if (!window.keplr) {
+        alert("❌ Kepler wallet not found!");
+        setIsGenerating(false);
+        return;
       }
 
-      const imageBlob = await response.blob();
-      const imageUrl = URL.createObjectURL(imageBlob);
-      setGeneratedImage(imageUrl);
+      const accounts = await window.getAccounts();
+      const senderAddress = accounts[0].address;
 
-      console.log("✅ Image successfully generated!");
-      break;
-    } catch (error: any) {
+      if (!senderAddress) {
+        alert("❌ Wallet not connected!");
+        setIsGenerating(false);
+        return;
+      }
+
+      console.log(`💳 Sender: ${senderAddress}`);
+
+      const transactionParameters = {
+        from: senderAddress,
+        to: "cosmos1recipientaddress", // Update with your Cosmos recipient address
+        amount: GENERATION_PRICE, // Amount in tokens for generation
+      };
+
+      console.log("📤 Sending transaction...", transactionParameters);
+
+      const txHash = await window.keplr.sendTransaction(AXONE_CHAIN_ID, transactionParameters);
+
+      console.log(`✅ Transaction sent! TX: https://explorer.kepler.app/tx/${txHash}`);
+      alert(`✅ Transaction sent!\nTX Hash: ${txHash}`);
+
+      await waitForTransaction(txHash);
+
+      console.log("🖼️ Generating image...");
+      await generateImage(prompt);
+
+    } catch (error) {
       console.error("❌ Error during generation:", error);
-      if (error.name === "AbortError") {
-        console.error("⏳ Request timed out.");
-      }
-      attempts--;
-
-      if (attempts === 0) {
-        alert("Image generation error: " + (error.message || "Unknown error"));
-      }
+      alert("Generation error: " + (error.message || "Unknown error"));
     } finally {
       setIsGenerating(false);
     }
-  }
-};
+  };
 
+  const waitForTransaction = async (txHash: string) => {
+    while (true) {
+      const receipt = await window.keplr.getTransactionReceipt(txHash);
+
+      if (receipt && receipt.status === "success") {
+        console.log(`✅ Transaction confirmed! TX: https://explorer.kepler.app/tx/${txHash}`);
+        alert(`✅ Transaction confirmed!\nTX Hash: ${txHash}`);
+        return;
+      } else if (receipt && receipt.status === "failure") {
+        console.log(`❌ Transaction failed! TX: https://explorer.kepler.app/tx/${txHash}`);
+        alert(`❌ Transaction failed!\nTX Hash: ${txHash}`);
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 3000)); // Check every 3 seconds
+    }
+  };
+
+  const generateImage = async (prompt: string) => {
+    setIsGenerating(true);
+
+    const API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2";
+    const headers = {
+      Authorization: `Bearer YOUR_HUGGING_FACE_API_KEY`,
+      "Content-Type": "application/json",
+    };
+
+    const requestBody = JSON.stringify({ inputs: prompt });
+
+    let attempts = 3; // Number of attempts
+    while (attempts > 0) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 sec timeout
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers,
+          body: requestBody,
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const errorJson = await response.json().catch(() => null);
+          const errorMessage = errorJson?.error || `Error ${response.status}: ${response.statusText}`;
+          console.error("❌ Hugging Face API error:", errorMessage);
+
+          if (response.status === 503 && attempts > 1) {
+            console.warn("⏳ Server overloaded, retrying...");
+            await new Promise((res) => setTimeout(res, 5000)); // Wait before retrying
+            attempts--;
+            continue;
+          }
+
+          throw new Error(errorMessage);
+        }
+
+        const imageBlob = await response.blob();
+        const imageUrl = URL.createObjectURL(imageBlob);
+        setGeneratedImage(imageUrl);
+
+        console.log("✅ Image successfully generated!");
+        break;
+      } catch (error) {
+        console.error("❌ Error during generation:", error);
+        if (error.name === "AbortError") {
+          console.error("⏳ Request timed out.");
+        }
+        attempts--;
+
+        if (attempts === 0) {
+          alert("Image generation error: " + (error.message || "Unknown error"));
+        }
+      } finally {
+        setIsGenerating(false);
+      }
+    }
+  };
 
   const copyToClipboard = async () => {
     try {
-      await navigator.clipboard.writeText(walletAddress)
-      setIsCopied(true)
-      setTimeout(() => setIsCopied(false), 2000)
+      await navigator.clipboard.writeText(walletAddress);
+      setIsCopied(true);
+      setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
-      console.error("Failed to copy text: ", err)
+      console.error("Failed to copy text: ", err);
     }
-  }
-
-  useEffect(() => {
-    if (isWalletConnected) {
-      checkNetwork()
-    }
-  }, [isWalletConnected]) // Removed checkNetwork from dependencies
+  };
 
   return (
     <div className={`flex flex-col min-h-screen ${isDarkMode ? "bg-black" : "bg-white"}`}>
