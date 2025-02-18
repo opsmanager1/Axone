@@ -118,48 +118,58 @@ export default function NFTClaimLanding() {
     setIsDarkMode(!isDarkMode);
   };
 
-  const handleGenerateImage = async () => {
-    if (!prompt) return;
-    setIsGenerating(true);
+  import { SigningStargateClient } from "@cosmjs/stargate";
 
-    try {
-      if (!window.keplr) {
-        alert("❌ Keplr wallet not found!");
-        setIsGenerating(false);
-        return;
-      }
+const handleGenerateImage = async () => {
+  if (!prompt) return;
+  setIsGenerating(true);
 
-      const offlineSigner = window.getOfflineSigner(AXONE_CHAIN_ID);
-      const accounts = await offlineSigner.getAccounts();
-      const senderAddress = accounts[0].address;
+  try {
+    if (!window.keplr) {
+      alert("❌ Keplr wallet not found!");
+      setIsGenerating(false);
+      return;
+    }
 
-      if (!senderAddress) {
-        alert("❌ Wallet not connected!");
-        setIsGenerating(false);
-        return;
-      }
+    await window.keplr.enable(AXONE_CHAIN_ID); // Включаем Keplr для сети
+    const offlineSigner = window.getOfflineSigner(AXONE_CHAIN_ID);
+    const accounts = await offlineSigner.getAccounts();
+    
+    if (accounts.length === 0) {
+      alert("❌ Wallet not connected!");
+      setIsGenerating(false);
+      return;
+    }
 
-      console.log(`💳 Sender: ${senderAddress}`);
+    const senderAddress = accounts[0].address;
+    console.log(`💳 Sender: ${senderAddress}`);
 
-      const amount = [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }];
-      const fee = {
-        amount: [{ denom: "uaxone", amount: "5000" }],
-        gas: "200000", // Adjust the gas limit as needed
-      };
+    const client = await SigningStargateClient.connectWithSigner(RPC_URL, offlineSigner);
 
-      const txBody = {
-        messages: [
-          {
-            type: "cosmos-sdk/MsgSend",
-            value: {
-              from_address: senderAddress,
-              to_address: RECIPIENT_ADDRESS,
-              amount: amount,
-            },
-          },
-        ],
-        memo: "",
-      };
+    const amount = [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }];
+    const fee = {
+      amount: [{ denom: "uaxone", amount: "5000" }],
+      gas: "200000",
+    };
+
+    const msgSend = {
+      fromAddress: senderAddress,
+      toAddress: RECIPIENT_ADDRESS,
+      amount: amount,
+    };
+
+    const result = await client.sendTokens(senderAddress, RECIPIENT_ADDRESS, amount, fee, ""); 
+    console.log("✅ Transaction result:", result);
+
+    alert("✅ Transaction sent successfully!");
+  } catch (error) {
+    console.error("❌ Transaction error:", error);
+    alert("❌ Transaction failed! Check console for details.");
+  } finally {
+    setIsGenerating(false);
+  }
+};
+
 
       const { accountNumber, sequence } = await getAccountInfo(senderAddress);
 
