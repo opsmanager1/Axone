@@ -8,9 +8,9 @@ import { Sun, Moon, Loader2, Copy, Check } from "lucide-react"
 import Image from "next/image"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const HUGGING_FACE_API_KEY = ""
+const HUGGING_FACE_API_KEY = "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"
 const GENERATION_PRICE = 1
-const WARDEN_CHAIN_ID = "0x271A" // 10010 в 16-ричном формате
+const AXONE_CHAIN_ID = "axone-dentrite-1" // 10010 в 16-ричном формате
 
 export default function NFTClaimLanding() {
   const [isWalletConnected, setIsWalletConnected] = useState(false)
@@ -25,7 +25,7 @@ export default function NFTClaimLanding() {
   useEffect(() => {
     if (typeof window.ethereum !== "undefined") {
       window.ethereum.on("chainChanged", (chainId: string) => {
-        setIsCorrectNetwork(chainId === WARDEN_CHAIN_ID)
+        setIsCorrectNetwork(chainId === AXONE_CHAIN_ID)
       })
     }
 
@@ -39,8 +39,8 @@ export default function NFTClaimLanding() {
   const checkNetwork = async () => {
     if (typeof window.ethereum !== "undefined") {
       const chainId = await window.ethereum.request({ method: "eth_chainId" })
-      setIsCorrectNetwork(chainId === WARDEN_CHAIN_ID)
-      return chainId === WARDEN_CHAIN_ID
+      setIsCorrectNetwork(chainId === AXONE_CHAIN_ID)
+      return chainId === AXONE_CHAIN_ID
     }
     return false
   }
@@ -55,16 +55,16 @@ export default function NFTClaimLanding() {
     try {
       await window.ethereum.request({
         method: "wallet_switchEthereumChain",
-        params: [{ chainId: WARDEN_CHAIN_ID }],
+        params: [{ chainId: AXONE_CHAIN_ID }],
       })
-      console.log("Successfully switched to Warden network")
+      console.log("Successfully switched to Axone network")
       await checkNetwork()
       return true
     } catch (error: any) {
       console.error("Error switching network:", error)
       if (error.code === 4902) {
-        console.log("Warden network not found, attempting to add it")
-        return addWardenNetwork()
+        console.log("Axone network not found, attempting to add it")
+        return addAxoneNetwork()
       } else {
         alert("Failed to switch network. Please try again.")
         return false
@@ -72,17 +72,17 @@ export default function NFTClaimLanding() {
     }
   }
 
-  const addWardenNetwork = async () => {
+  const addAxoneNetwork = async () => {
     const chainParams = {
-      chainId: WARDEN_CHAIN_ID,
-      chainName: "Warden Protocol Testnet",
-      rpcUrls: ["https://evm.chiado.wardenprotocol.org"],
+      chainId: AXONE_CHAIN_ID,
+      chainName: "Axone Protocol Testnet",
+      rpcUrls: ["https://axone-rpc.bitnodes.xyz/"],
       nativeCurrency: {
         name: "WARD",
         symbol: "WARD",
         decimals: 18,
       },
-      blockExplorerUrls: ["https://explorer.herculesnode.com/Warden-Chiado"],
+      blockExplorerUrls: ["https://explorer.bitnodes.xyz/Axone%20testnet/"],
     }
 
     try {
@@ -90,11 +90,11 @@ export default function NFTClaimLanding() {
         method: "wallet_addEthereumChain",
         params: [chainParams],
       })
-      console.log("Successfully added Warden network")
+      console.log("Successfully added Axone network")
       return true
     } catch (error) {
-      console.error("Error adding Warden network:", error)
-      alert("Failed to add Warden network. Please try again or add it manually.")
+      console.error("Error adding Axone network:", error)
+      alert("Failed to add Axone network. Please try again or add it manually.")
       return false
     }
   }
@@ -106,7 +106,7 @@ export default function NFTClaimLanding() {
         if (!isCorrect) {
           const switched = await switchNetwork()
           if (!switched) {
-            alert("Please switch to the Warden network to use this dApp.")
+            alert("Please switch to the Axone network to use this dApp.")
             return
           }
         }
@@ -299,11 +299,11 @@ const generateImage = async (prompt: string) => {
           <Avatar>
             <AvatarImage
               src="https://pbs.twimg.com/profile_images/1890424736359882753/NmjlHv3T_400x400.jpg"
-              alt="Warden"
+              alt="Axone"
             />
             <AvatarFallback>WD</AvatarFallback>
           </Avatar>
-          <h1 className="text-2xl font-bold tracking-tight italic">Warden AI tool</h1>
+          <h1 className="text-2xl font-bold tracking-tight italic">Axone AI tool</h1>
         </div>
         <div className="flex items-center space-x-4">
           <Sun className="h-4 w-4" />
@@ -374,7 +374,7 @@ const generateImage = async (prompt: string) => {
           </div>
           {!isCorrectNetwork && isWalletConnected && (
             <p className="text-red-500 text-center">
-              Please switch to the Warden network to use this dApp.
+              Please switch to the Axone network to use this dApp.
               <Button
                 onClick={async () => {
                   console.log("Switch Network button clicked")
@@ -433,7 +433,7 @@ const generateImage = async (prompt: string) => {
           </div>
         </div>
         <div className="mt-4 text-center text-xs">
-          <p className="text-gray-500">Powered by WARDEN protocol chain AI Generator. Designed with ❤️ by the BITNODES Team.</p>
+          <p className="text-gray-500">Powered by AXONE protocol chain AI Generator. Designed with ❤️ by the BITNODES Team.</p>
         </div>
       </footer>
     </div>
