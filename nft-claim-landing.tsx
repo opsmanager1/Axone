@@ -8,7 +8,7 @@ import { Sun, Moon, Loader2, Copy, Check } from "lucide-react"
 import Image from "next/image"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const HUGGING_FACE_API_KEY = "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"
+const HUGGING_FACE_API_KEY = ""
 const GENERATION_PRICE = 1
 const WARDEN_CHAIN_ID = "0x271A" // 10010 в 16-ричном формате
 
