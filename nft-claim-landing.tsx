@@ -22,70 +22,6 @@ export default function NFTClaimLanding() {
   const [isCopied, setIsCopied] = useState(false);
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
 
-  useEffect(() => {
-    const enableKeplr = async () => {
-      if (typeof window.keplr !== "undefined") {
-        try {
-          await window.keplr.experimentalSuggestChain({
-            chainId: AXONE_CHAIN_ID,
-            chainName: "Axone testnet",
-            rpc: "https://api.dentrite.axone.xyz:443/rpc",
-            rest: "https://api.dentrite.axone.xyz",
-            bip44: {
-              coinType: 118,
-            },
-            bech32Config: {
-              bech32PrefixAccAddr: "axone",
-              bech32PrefixAccPub: "axonepub",
-              bech32PrefixValAddr: "axonevaloper",
-              bech32PrefixValPub: "axonevaloperpub",
-              bech32PrefixConsAddr: "axonevalcons",
-              bech32PrefixConsPub: "axonevalconspub",
-            },
-            currencies: [
-              {
-                coinDenom: "AXONE",
-                coinMinimalDenom: "uaxone",
-                coinDecimals: 6,
-                coinGeckoId: "unknown",
-              },
-            ],
-            feeCurrencies: [
-              {
-                coinDenom: "AXONE",
-                coinMinimalDenom: "uaxone",
-                coinDecimals: 6,
-                coinGeckoId: "unknown",
-                gasPriceStep: {
-                  low: 0.01,
-                  average: 0.025,
-                  high: 0.03,
-                },
-              },
-            ],
-            stakeCurrency: {
-              coinDenom: "AXONE",
-              coinMinimalDenom: "uaxone",
-              coinDecimals: 6,
-              coinGeckoId: "unknown",
-            },
-            features: [],
-            beta: true,
-          });
-
-          await window.keplr.enable(AXONE_CHAIN_ID);
-          const chainId = await window.keplr.getChainId();
-          setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
-        } catch (error) {
-          console.error("Error enabling Keplr:", error);
-        }
-      } else {
-        console.error("Keplr not found. Please install Keplr extension.");
-      }
-    };
-    enableKeplr();
-  }, []);
-
   const checkNetwork = async () => {
     if (typeof window.keplr !== "undefined") {
       try {
@@ -103,6 +39,53 @@ export default function NFTClaimLanding() {
   const handleConnectWallet = async () => {
     if (window.keplr && window.getOfflineSigner) {
       try {
+        await window.keplr.experimentalSuggestChain({
+          chainId: AXONE_CHAIN_ID,
+          chainName: "Axone testnet",
+          rpc: "https://api.dentrite.axone.xyz:443/rpc",
+          rest: "https://api.dentrite.axone.xyz",
+          bip44: {
+            coinType: 118,
+          },
+          bech32Config: {
+            bech32PrefixAccAddr: "axone",
+            bech32PrefixAccPub: "axonepub",
+            bech32PrefixValAddr: "axonevaloper",
+            bech32PrefixValPub: "axonevaloperpub",
+            bech32PrefixConsAddr: "axonevalcons",
+            bech32PrefixConsPub: "axonevalconspub",
+          },
+          currencies: [
+            {
+              coinDenom: "AXONE",
+              coinMinimalDenom: "uaxone",
+              coinDecimals: 6,
+              coinGeckoId: "unknown",
+            },
+          ],
+          feeCurrencies: [
+            {
+              coinDenom: "AXONE",
+              coinMinimalDenom: "uaxone",
+              coinDecimals: 6,
+              coinGeckoId: "unknown",
+              gasPriceStep: {
+                low: 0.01,
+                average: 0.025,
+                high: 0.03,
+              },
+            },
+          ],
+          stakeCurrency: {
+            coinDenom: "AXONE",
+            coinMinimalDenom: "uaxone",
+            coinDecimals: 6,
+            coinGeckoId: "unknown",
+          },
+          features: [],
+          beta: true,
+        });
+
         await window.keplr.enable(AXONE_CHAIN_ID);
         const offlineSigner = window.getOfflineSigner(AXONE_CHAIN_ID);
         const accounts = await offlineSigner.getAccounts();
@@ -342,7 +325,7 @@ export default function NFTClaimLanding() {
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="mb-6 text-center">
             <p className="mb-2">Create unique AI-generated art with our advanced image generation model.</p>
-            <p className="font-semibold">Price per generation: {GENERATION_PRICE} $WARD</p>
+            <p className="font-semibold">Price per generation: {GENERATION_PRICE} $AXONE</p>
           </div>
           <div className="flex space-x-4">
             <Input
@@ -363,7 +346,7 @@ export default function NFTClaimLanding() {
           </div>
           {!isCorrectNetwork && isWalletConnected && (
             <p className="text-red-500 text-center">
-              Please switch to the Warden network to use this dApp.
+              Please switch to the Axone network to use this dApp.
               <Button
                 onClick={async () => {
                   console.log("Switch Network button clicked")
