@@ -9,7 +9,6 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SigningStargateClient } from "@cosmjs/stargate";
 
-
 const HUGGING_FACE_API_KEY = "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";
 const GENERATION_PRICE = 1;
 const AXONE_CHAIN_ID = "axone-dentrite-1"; // Keplr network chain ID (Axone Protocol Testnet)
@@ -120,131 +119,58 @@ export default function NFTClaimLanding() {
     setIsDarkMode(!isDarkMode);
   };
 
-const handleGenerateImage = async () => {
-  if (!prompt) return;
-  setIsGenerating(true);
+  const handleGenerateImage = async () => {
+    if (!prompt) return;
+    setIsGenerating(true);
 
-  try {
-    if (!window.keplr) {
-      alert("❌ Keplr wallet not found!");
-      setIsGenerating(false);
-      return;
-    }
-
-    await window.keplr.enable(AXONE_CHAIN_ID); // Включаем Keplr для сети
-    const offlineSigner = window.getOfflineSigner(AXONE_CHAIN_ID);
-    const accounts = await offlineSigner.getAccounts();
-    
-    if (accounts.length === 0) {
-      alert("❌ Wallet not connected!");
-      setIsGenerating(false);
-      return;
-    }
-
-    const senderAddress = accounts[0].address;
-    console.log(`💳 Sender: ${senderAddress}`);
-
-    const client = await SigningStargateClient.connectWithSigner(RPC_URL, offlineSigner);
-
-    const amount = [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }];
-    const fee = {
-      amount: [{ denom: "uaxone", amount: "5000" }],
-      gas: "200000",
-    };
-
-    const msgSend = {
-      fromAddress: senderAddress,
-      toAddress: RECIPIENT_ADDRESS,
-      amount: amount,
-    };
-
-    const result = await client.sendTokens(senderAddress, RECIPIENT_ADDRESS, amount, fee, ""); 
-    console.log("✅ Transaction result:", result);
-
-    alert("✅ Transaction sent successfully!");
-  } catch (error) {
-    console.error("❌ Transaction error:", error);
-    alert("❌ Transaction failed! Check console for details.");
-  } finally {
-    setIsGenerating(false);
-  }
-};
-
-
-      const { accountNumber, sequence } = await getAccountInfo(senderAddress);
-
-      const authInfo = {
-        signer_infos: [
-          {
-            public_key: (await offlineSigner.getAccounts())[0].pubkey,
-            mode_info: {
-              single: { mode: "SIGN_MODE_DIRECT" },
-            },
-            sequence: sequence.toString(),
-          },
-        ],
-        fee: fee,
-      };
-
-      const signDoc = {
-        bodyBytes: new TextEncoder().encode(JSON.stringify(txBody)),
-        authInfoBytes: new TextEncoder().encode(JSON.stringify(authInfo)),
-        chainId: AXONE_CHAIN_ID,
-        accountNumber: accountNumber.toString(),
-      };
-
-      const { signed, signature } = await window.keplr.signDirect(AXONE_CHAIN_ID, senderAddress, signDoc);
-
-      const txRaw = {
-        body_bytes: signed.bodyBytes,
-        auth_info_bytes: signed.authInfoBytes,
-        signatures: [signature.signature],
-      };
-
-      const result = await broadcastTx(txRaw);
-
-      if (result.code !== undefined && result.code !== 0) {
-        throw new Error(`Failed to send tx: ${result.raw_log}`);
+    try {
+      if (!window.keplr) {
+        alert("❌ Keplr wallet not found!");
+        setIsGenerating(false);
+        return;
       }
 
-      console.log(`✅ Transaction sent! TX: ${result.txhash}`);
-      alert(`✅ Transaction sent!\nTX Hash: ${result.txhash}`);
+      await window.keplr.enable(AXONE_CHAIN_ID);
+      const offlineSigner = window.getOfflineSigner(AXONE_CHAIN_ID);
+      const accounts = await offlineSigner.getAccounts();
 
-      await waitForTransaction(result.txhash);
+      if (accounts.length === 0) {
+        alert("❌ Wallet not connected!");
+        setIsGenerating(false);
+        return;
+      }
+
+      const senderAddress = accounts[0].address;
+      console.log(`💳 Sender: ${senderAddress}`);
+
+      const client = await SigningStargateClient.connectWithSigner(RPC_URL, offlineSigner);
+
+      const amount = [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }];
+      const fee = {
+        amount: [{ denom: "uaxone", amount: "5000" }],
+        gas: "200000",
+      };
+
+      const result = await client.sendTokens(senderAddress, RECIPIENT_ADDRESS, amount, fee, "");
+      console.log("✅ Transaction result:", result);
+
+      if (result.code !== undefined && result.code !== 0) {
+        throw new Error(`Failed to send tx: ${result.rawLog}`);
+      }
+
+      alert("✅ Transaction sent successfully!");
+
+      await waitForTransaction(result.transactionHash);
 
       console.log("🖼️ Generating image...");
       await generateImage(prompt);
 
     } catch (error) {
-      console.error("❌ Error during generation:", error);
-      alert("Generation error: " + (error.message || "Unknown error"));
+      console.error("❌ Transaction error:", error);
+      alert("❌ Transaction failed! Check console for details.");
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const getAccountInfo = async (address: string) => {
-    const response = await fetch(`${REST_URL}/cosmos/auth/v1beta1/accounts/${address}`);
-    const data = await response.json();
-    const account = data.account.base_account || data.account;
-    return {
-      accountNumber: account.account_number,
-      sequence: account.sequence,
-    };
-  };
-
-  const broadcastTx = async (txRaw: any) => {
-    const response = await fetch(`${REST_URL}/cosmos/tx/v1beta1/txs`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        tx_bytes: Buffer.from(JSON.stringify(txRaw), "utf-8").toString("base64"),
-        mode: "BROADCAST_MODE_SYNC",
-      }),
-    });
-    return response.json();
   };
 
   const waitForTransaction = async (txHash: string) => {
