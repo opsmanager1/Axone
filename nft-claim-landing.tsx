@@ -23,19 +23,18 @@ export default function NFTClaimLanding() {
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
 
   useEffect(() => {
-  const connectKeplr = async () => {
     if (typeof window.keplr !== "undefined") {
-      await window.keplr.enable(AXONE_CHAIN_ID);
-      const chainId = await window.keplr.getChainId();
-      setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
+      const enableKeplr = async () => {
+        try {
+          await window.keplr.enable(AXONE_CHAIN_ID);
+          const chainId = await window.keplr.getChainId();
+          setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
+        } catch (error) {
+          console.error("Error enabling Keplr:", error);
+        }
+      };
+      enableKeplr();
     }
-  };
-  
-  connectKeplr();
-
-  return () => {
-    // Any cleanup if needed
-  };
   }, []);
 
   const checkNetwork = async () => {
@@ -48,31 +47,26 @@ export default function NFTClaimLanding() {
   };
 
   const handleConnectWallet = async () => {
-  if (window.getOfflineSigner) {
-    try {
-      // Убедитесь, что пользователь находится в нужной сети
-      const chainId = AXONE_CHAIN_ID; // Например, Axone Testnet
-      await window.keplr.enable(chainId);
-
-      // Получаем учетные записи из Keplr
-      const offlineSigner = window.getOfflineSigner(chainId);
-      const accounts = await offlineSigner.getAccounts();
-
-      if (accounts.length > 0) {
-        setWalletAddress(accounts[0].address);
-        setIsWalletConnected(true);
-        setIsCorrectNetwork(true);
-      } else {
-        alert("No accounts found in Keplr.");
+    if (window.keplr && window.getOfflineSigner) {
+      try {
+        await window.keplr.enable(AXONE_CHAIN_ID);
+        const offlineSigner = window.getOfflineSigner(AXONE_CHAIN_ID);
+        const accounts = await offlineSigner.getAccounts();
+        if (accounts.length > 0) {
+          setWalletAddress(accounts[0].address);
+          setIsWalletConnected(true);
+          setIsCorrectNetwork(true);
+        } else {
+          alert("No accounts found in Keplr.");
+        }
+      } catch (error) {
+        console.error("Failed to connect Keplr:", error);
+        alert("Failed to connect to Keplr. Please try again.");
       }
-    } catch (error) {
-      console.error("Failed to connect Keplr:", error);
-      alert("Failed to connect to Keplr. Please try again.");
+    } else {
+      alert("Please install Keplr!");
     }
-  } else {
-    alert("Please install Keplr!");
-  }
-};
+  };
 
   const handleLogout = () => {
     setIsWalletConnected(false);
@@ -156,7 +150,7 @@ export default function NFTClaimLanding() {
 
     const API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2";
     const headers = {
-      Authorization: `Bearer YOUR_HUGGING_FACE_API_KEY`,
+      Authorization: `Bearer ${HUGGING_FACE_API_KEY}`,
       "Content-Type": "application/json",
     };
 
@@ -223,6 +217,12 @@ export default function NFTClaimLanding() {
       console.error("Failed to copy text: ", err);
     }
   };
+
+  useEffect(() => {
+    if (isWalletConnected) {
+      checkNetwork();
+    }
+  }, [isWalletConnected]);
 
   return (
     <div className={`flex flex-col min-h-screen ${isDarkMode ? "bg-black" : "bg-white"}`}>
