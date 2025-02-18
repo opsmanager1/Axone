@@ -23,16 +23,19 @@ export default function NFTClaimLanding() {
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
 
   useEffect(() => {
+  const connectKeplr = async () => {
     if (typeof window.keplr !== "undefined") {
-      window.keplr.enable(AXONE_CHAIN_ID).then(() => {
-        const chainId = await window.keplr.getChainId();
-        setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
-      });
+      await window.keplr.enable(AXONE_CHAIN_ID);
+      const chainId = await window.keplr.getChainId();
+      setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
     }
+  };
+  
+  connectKeplr();
 
-    return () => {
-      // Any cleanup can be done here if necessary.
-    };
+  return () => {
+    // Any cleanup if needed
+  };
   }, []);
 
   const checkNetwork = async () => {
