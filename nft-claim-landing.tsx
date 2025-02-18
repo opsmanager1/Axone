@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Sun, Moon, Loader2, Copy, Check } from "lucide-react";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { SigningStargateClient } from "@cosmjs/stargate";
+
 
 const HUGGING_FACE_API_KEY = "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";
 const GENERATION_PRICE = 1;
