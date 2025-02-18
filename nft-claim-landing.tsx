@@ -11,7 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const HUGGING_FACE_API_KEY = "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"
 const GENERATION_PRICE = 1;
 const AXONE_CHAIN_ID = "axone-dentrite-1"; // Keplr network chain ID (Axone Protocol Testnet)
-const RECIPIENT_ADDRESS = "axone1recipientaddress"; // Update with your Axone recipient address
+const RECIPIENT_ADDRESS = "axone1mtp47d2uyu9g89tfh2ghtey7f9a4lj8f9rg9x4"; // Update with your Axone recipient address
+const RPC_URL = "https://api.dentrite.axone.xyz:443/rpc";
+const REST_URL = "https://api.dentrite.axone.xyz";
 
 export default function NFTClaimLanding() {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
@@ -43,8 +45,8 @@ export default function NFTClaimLanding() {
         await window.keplr.experimentalSuggestChain({
           chainId: AXONE_CHAIN_ID,
           chainName: "Axone testnet",
-          rpc: "https://api.dentrite.axone.xyz:443/rpc",
-          rest: "https://api.dentrite.axone.xyz",
+          rpc: RPC_URL,
+          rest: REST_URL,
           bip44: {
             coinType: 118,
           },
@@ -144,12 +146,9 @@ export default function NFTClaimLanding() {
         amount: [{ denom: "uaxone", amount: "5000" }],
         gas: "200000", // Adjust the gas limit as needed
       };
-      const chainId = AXONE_CHAIN_ID;
 
-      const result = await window.keplr.signAndBroadcast(
-        chainId,
-        senderAddress,
-        [
+      const txBody = {
+        messages: [
           {
             type: "cosmos-sdk/MsgSend",
             value: {
@@ -159,17 +158,49 @@ export default function NFTClaimLanding() {
             },
           },
         ],
-        fee
-      );
+        memo: "",
+      };
+
+      const { accountNumber, sequence } = await getAccountInfo(senderAddress);
+
+      const authInfo = {
+        signer_infos: [
+          {
+            public_key: (await offlineSigner.getAccounts())[0].pubkey,
+            mode_info: {
+              single: { mode: "SIGN_MODE_DIRECT" },
+            },
+            sequence: sequence.toString(),
+          },
+        ],
+        fee: fee,
+      };
+
+      const signDoc = {
+        body_bytes: txBody,
+        auth_info_bytes: authInfo,
+        chain_id: AXONE_CHAIN_ID,
+        account_number: accountNumber.toString(),
+      };
+
+      const { signed, signature } = await window.keplr.signDirect(AXONE_CHAIN_ID, senderAddress, signDoc);
+
+      const txRaw = {
+        body_bytes: signed.body_bytes,
+        auth_info_bytes: signed.auth_info_bytes,
+        signatures: [signature.signature],
+      };
+
+      const result = await broadcastTx(txRaw);
 
       if (result.code !== undefined && result.code !== 0) {
         throw new Error(`Failed to send tx: ${result.log || result.raw_log}`);
       }
 
-      console.log(`✅ Transaction sent! TX: ${result.transactionHash}`);
-      alert(`✅ Transaction sent!\nTX Hash: ${result.transactionHash}`);
+      console.log(`✅ Transaction sent! TX: ${result.txhash}`);
+      alert(`✅ Transaction sent!\nTX Hash: ${result.txhash}`);
 
-      await waitForTransaction(result.transactionHash);
+      await waitForTransaction(result.txhash);
 
       console.log("🖼️ Generating image...");
       await generateImage(prompt);
@@ -182,17 +213,41 @@ export default function NFTClaimLanding() {
     }
   };
 
+  const getAccountInfo = async (address: string) => {
+    const response = await fetch(`${REST_URL}/cosmos/auth/v1beta1/accounts/${address}`);
+    const data = await response.json();
+    const account = data.account.base_account || data.account;
+    return {
+      accountNumber: account.account_number,
+      sequence: account.sequence,
+    };
+  };
+
+  const broadcastTx = async (txRaw: any) => {
+    const response = await fetch(`${REST_URL}/cosmos/tx/v1beta1/txs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        tx_bytes: txRaw,
+        mode: "BROADCAST_MODE_SYNC",
+      }),
+    });
+    return response.json();
+  };
+
   const waitForTransaction = async (txHash: string) => {
     while (true) {
-      // Assuming a function window.keplr.getTransactionReceipt is available to get transaction status
-      const receipt = await window.keplr.getTransactionReceipt(txHash);
+      const response = await fetch(`${REST_URL}/cosmos/tx/v1beta1/txs/${txHash}`);
+      const data = await response.json();
 
-      if (receipt && receipt.status === "success") {
-        console.log(`✅ Transaction confirmed! TX: https://api.dentrite.axone.xyz/tx/${txHash}`);
+      if (data.tx_response && data.tx_response.code === 0) {
+        console.log(`✅ Transaction confirmed! TX: ${txHash}`);
         alert(`✅ Transaction confirmed!\nTX Hash: ${txHash}`);
         return;
-      } else if (receipt && receipt.status === "failure") {
-        console.log(`❌ Transaction failed! TX: https://api.dentrite.axone.xyz/tx/${txHash}`);
+      } else if (data.tx_response && data.tx_response.code) {
+        console.log(`❌ Transaction failed! TX: ${txHash}`);
         alert(`❌ Transaction failed!\nTX Hash: ${txHash}`);
         return;
       }
