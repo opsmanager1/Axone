@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import NFTClaimLanding from "../nft-claim-landing"
+import AxoneAI from "../AxoneAI";
 
 export default function SyntheticV0PageForDeployment() {
-  return <NFTClaimLanding />
+  return <AxoneAI />;
 }
