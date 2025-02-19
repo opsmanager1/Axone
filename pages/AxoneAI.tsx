@@ -124,54 +124,55 @@ export default function NFTClaimLanding() {
     setIsGenerating(true);
 
     try {
-      if (!window.keplr) {
-        alert("❌ Keplr wallet not found!");
-        setIsGenerating(false);
-        return;
-      }
+        if (!window.keplr) {
+            alert("❌ Keplr wallet not found!");
+            setIsGenerating(false);
+            return;
+        }
 
-      await window.keplr.enable(AXONE_CHAIN_ID);
-      const offlineSigner = window.getOfflineSigner(AXONE_CHAIN_ID);
-      const accounts = await offlineSigner.getAccounts();
+        await window.keplr.enable(AXONE_CHAIN_ID);
+        const offlineSigner = window.getOfflineSigner(AXONE_CHAIN_ID);
+        const accounts = await offlineSigner.getAccounts();
 
-      if (accounts.length === 0) {
-        alert("❌ Wallet not connected!");
-        setIsGenerating(false);
-        return;
-      }
+        if (accounts.length === 0) {
+            alert("❌ Wallet not connected!");
+            setIsGenerating(false);
+            return;
+        }
 
-      const senderAddress = accounts[0].address;
-      console.log(`💳 Sender: ${senderAddress}`);
+        const senderAddress = accounts[0].address;
+        console.log(`💳 Sender: ${senderAddress}`);
 
-      const client = await SigningStargateClient.connectWithSigner(RPC_URL, offlineSigner);
+        const client = await SigningStargateClient.connectWithSigner(RPC_URL, offlineSigner);
 
-      const amount = [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }];
-      const fee = {
-        amount: [{ denom: "uaxone", amount: "5000" }],
-        gas: "200000",
-      };
+        const amount = [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }];
+        const fee = {
+            amount: [{ denom: "uaxone", amount: "5000" }],
+            gas: "200000",
+        };
 
-      const result = await client.sendTokens(senderAddress, RECIPIENT_ADDRESS, amount, fee, "");
-      console.log("✅ Transaction result:", result);
+        const result = await client.sendTokens(senderAddress, RECIPIENT_ADDRESS, amount, fee, "");
+        console.log("✅ Transaction result:", result);
 
-      if (result.code !== undefined && result.code !== 0) {
-        throw new Error(`Failed to send tx: ${result.rawLog}`);
-      }
+        if (result.code !== undefined && result.code !== 0) {
+            console.error(`Failed to send tx: ${result.rawLog}`); // Выводим лог ошибки
+            throw new Error(`Failed to send tx: ${result.rawLog}`);
+        }
 
-      alert("✅ Transaction sent successfully!");
+        alert("✅ Transaction sent successfully!");
 
-      await waitForTransaction(result.transactionHash);
-
-      console.log("🖼️ Generating image...");
-      await generateImage(prompt);
+        await waitForTransaction(result.transactionHash);
+        console.log("🖼️ Generating image...");
+        await generateImage(prompt);
 
     } catch (error) {
-      console.error("❌ Transaction error:", error);
-      alert("❌ Transaction failed! Check console for details.");
+        console.error("❌ Transaction error:", error);
+        alert("❌ Transaction failed! Check console for details.");
     } finally {
-      setIsGenerating(false);
+        setIsGenerating(false);
     }
-  };
+};
+
 
   const waitForTransaction = async (txHash: string) => {
     while (true) {
