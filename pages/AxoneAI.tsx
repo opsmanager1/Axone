@@ -223,11 +223,12 @@ export default function NFTClaimLanding() {
                 const errorMessage = errorJson?.error || `Ошибка ${response.status}: ${response.statusText}`;
                 console.error("❌ Ошибка API:", errorMessage); // Обновлено
                 if (response.status === 503 && attempts > 1) {
-                    console.warn("⏳ Сервер перегружен, повторная попытка...");
-                    await new Promise((res) => setTimeout(res, 5000)); 
-                    attempts--;
-                    continue;
-                }
+  console.warn("⏳ Модель загружается, повторная попытка через 10 секунд...");
+  await new Promise((res) => setTimeout(res, 10000)); // Увеличиваем задержку перед новой попыткой
+  attempts--;
+  continue;
+}
+
                 throw new Error(errorMessage);
             }
 
