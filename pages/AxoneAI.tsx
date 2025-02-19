@@ -198,59 +198,70 @@ export default function NFTClaimLanding() {
 
 
 
-  const generateImage = async (prompt: string) => {
-    console.log("Начало генерации изображения с prompt:", prompt); // Добавьте лог
-    setIsGenerating(true);
-    let attempts = 3; 
-    const API_URL = "/api/generateImage"; 
+  const generateImage = async (prompt) => {
+  setIsGenerating(true);
+  let attempts = 3;
+  const API_URL = "/api/generateImage";
 
-    while (attempts > 0) {
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000); 
-            const response = await fetch(API_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ prompt }),
-                signal: controller.signal,
-            });
-            clearTimeout(timeoutId);
+  while (attempts > 0) {
+    try {
+      console.log(`📤 Отправка запроса в API (${attempts} попыток осталось)...`);
 
-            if (!response.ok) {
-                const errorJson = await response.json().catch(() => null);
-                const errorMessage = errorJson?.error || `Ошибка ${response.status}: ${response.statusText}`;
-                console.error("❌ Ошибка API:", errorMessage); // Обновлено
-                if (response.status === 503 && attempts > 1) {
-  console.warn("⏳ Модель загружается, повторная попытка через 10 секунд...");
-  await new Promise((res) => setTimeout(res, 10000)); // Увеличиваем задержку перед новой попыткой
-  attempts--;
-  continue;
-}
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.error("⏳ Время запроса истекло!");
+      }, 90000); // Увеличен таймаут до 90 секунд
 
-                throw new Error(errorMessage);
-            }
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt }),
+        signal: controller.signal,
+      });
 
-            const { imageUrl } = await response.json();
-            setGeneratedImage(imageUrl);
-            console.log("✅ Изображение успешно сгенерировано!", imageUrl); // Добавьте лог
-            break;
-        } catch (error) {
-            console.error("❌ Ошибка во время генерации:", error);
-            if (error.name === "AbortError") {
-                console.error("⏳ Время запроса истекло.");
-            }
-            attempts--;
+      clearTimeout(timeoutId);
 
-            if (attempts === 0) {
-                alert("Ошибка генерации изображения: " + (error.message || "Неизвестная ошибка"));
-            }
-        } finally {
-            setIsGenerating(false);
+      console.log("📥 Ответ от API получен");
+
+      if (!response.ok) {
+        const errorJson = await response.json().catch(() => null);
+        const errorMessage = errorJson?.error || `Ошибка ${response.status}: ${response.statusText}`;
+        console.error("❌ Ошибка API:", errorMessage);
+
+        if ((response.status === 503 || response.status === 504) && attempts > 1) {
+          console.warn("⏳ Сервер перегружен, повторная попытка через 15 секунд...");
+          await new Promise((res) => setTimeout(res, 15000)); // Увеличенная задержка между попытками
+          attempts--;
+          continue;
         }
+
+        throw new Error(errorMessage);
+      }
+
+      const { imageUrl } = await response.json();
+      console.log("✅ Изображение успешно сгенерировано!", imageUrl);
+
+      setGeneratedImage(imageUrl);
+      break;
+    } catch (error) {
+      console.error("❌ Ошибка во время генерации:", error);
+      if (error.name === "AbortError") {
+        console.error("⏳ Время запроса истекло.");
+      }
+      attempts--;
+
+      if (attempts === 0) {
+        alert("Ошибка генерации изображения: " + (error.message || "Неизвестная ошибка"));
+      }
+    } finally {
+      setIsGenerating(false);
     }
+  }
 };
+
 
 
 
