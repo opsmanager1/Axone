@@ -33,11 +33,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(response.status).json({ error: errorJson.error || 'Error generating image' });
     }
 
-    const imageBlob = await response.blob();
-    const imageUrl = URL.createObjectURL(imageBlob);
+    const data = await response.json(); // Изменение здесь
+    const imageUrl = data.url; // Убедитесь, что вы получаете правильный URL изображения из ответа
+
     res.status(200).json({ imageUrl });
   } catch (error) {
     console.error("Error generating image:", error);
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
