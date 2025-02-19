@@ -9,7 +9,7 @@ import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { SigningStargateClient } from "@cosmjs/stargate";
 
-const HUGGING_FACE_API_KEY = process.env.HUGGING_FACE_API_KEY;
+//const HUGGING_FACE_API_KEY = process.env.HUGGING_FACE_API_KEY;
 const GENERATION_PRICE = 1;
 const AXONE_CHAIN_ID = "axone-dentrite-1"; 
 const RECIPIENT_ADDRESS = "axone1mtp47d2uyu9g89tfh2ghtey7f9a4lj8f9rg9x4";
@@ -193,67 +193,33 @@ export default function NFTClaimLanding() {
   };
 
   const generateImage = async (prompt: string) => {
-    setIsGenerating(true);
+  setIsGenerating(true);
 
-    const API_URL = "https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-2";
-    const headers = {
-      Authorization: `Bearer ${HUGGING_FACE_API_KEY}`,
-      "Content-Type": "application/json",
-    };
+  try {
+    const response = await fetch('/api/generateImage', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ prompt }),
+    });
 
-    const requestBody = JSON.stringify({ inputs: prompt });
-
-    let attempts = 3; // Number of attempts
-    while (attempts > 0) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 sec timeout
-
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers,
-          body: requestBody,
-          signal: controller.signal,
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          const errorJson = await response.json().catch(() => null);
-          const errorMessage = errorJson?.error || `Error ${response.status}: ${response.statusText}`;
-          console.error("❌ Hugging Face API error:", errorMessage);
-
-          if (response.status === 503 && attempts > 1) {
-            console.warn("⏳ Server overloaded, retrying...");
-            await new Promise((res) => setTimeout(res, 5000)); // Wait before retrying
-            attempts--;
-            continue;
-          }
-
-          throw new Error(errorMessage);
-        }
-
-        const imageBlob = await response.blob();
-        const imageUrl = URL.createObjectURL(imageBlob);
-        setGeneratedImage(imageUrl);
-
-        console.log("✅ Image successfully generated!");
-        break;
-      } catch (error) {
-        console.error("❌ Error during generation:", error);
-        if (error.name === "AbortError") {
-          console.error("⏳ Request timed out.");
-        }
-        attempts--;
-
-        if (attempts === 0) {
-          alert("Image generation error: " + (error.message || "Unknown error"));
-        }
-      } finally {
-        setIsGenerating(false);
-      }
+    if (!response.ok) {
+      const errorJson = await response.json();
+      throw new Error(errorJson.error || 'Error generating image');
     }
-  };
+
+    const { imageUrl } = await response.json();
+    setGeneratedImage(imageUrl);
+    console.log("✅ Image successfully generated!");
+  } catch (error) {
+    console.error("❌ Error during generation:", error);
+    alert("Image generation error: " + (error.message || "Unknown error"));
+  } finally {
+    setIsGenerating(false);
+  }
+};
+
 
   const copyToClipboard = async () => {
     try {
