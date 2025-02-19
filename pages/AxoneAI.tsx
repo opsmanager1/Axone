@@ -200,6 +200,7 @@ export default function NFTClaimLanding() {
 
 
   const generateImage = async (prompt: string) => {
+    console.log("Начало генерации изображения с prompt:", prompt);
     setIsGenerating(true);
     let attempts = 3; 
     const API_URL = "/api/generateImage";
