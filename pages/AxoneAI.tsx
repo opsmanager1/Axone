@@ -175,7 +175,8 @@ export default function NFTClaimLanding() {
 
 
   const waitForTransaction = async (txHash: string) => {
-    while (true) {
+  while (true) {
+    try {
       const response = await fetch(`${REST_URL}/cosmos/tx/v1beta1/txs/${txHash}`);
       const data = await response.json();
 
@@ -188,10 +189,13 @@ export default function NFTClaimLanding() {
         alert(`❌ Transaction failed!\nTX Hash: ${txHash}`);
         return;
       }
-
-      await new Promise((resolve) => setTimeout(resolve, 3000)); 
+    } catch (error) {
+      console.error("Error checking transaction status:", error);
     }
-  };
+
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+};
 
   const generateImage = async (prompt: string) => {
   setIsGenerating(true);
