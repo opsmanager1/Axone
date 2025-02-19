@@ -29,7 +29,7 @@ export default function NFTClaimLanding() {
   const checkNetwork = async () => {
     if (typeof window.keplr !== "undefined") {
       try {
-        const chainId = await window.keplr.getKey(AXONE_CHAIN_ID).then((key) => key.bech32Address);
+        const chainId = await window.keplr.getChainId();
         setIsCorrectNetwork(chainId === AXONE_CHAIN_ID);
         return chainId === AXONE_CHAIN_ID;
       } catch (error) {
