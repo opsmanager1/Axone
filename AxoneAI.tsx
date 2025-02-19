@@ -188,19 +188,19 @@ export default function NFTClaimLanding() {
         return;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 3000)); // Check every 3 seconds
+      await new Promise((resolve) => setTimeout(resolve, 3000)); 
     }
   };
 
   const generateImage = async (prompt: string) => {
   setIsGenerating(true);
-  let attempts = 3; // Количество попыток
-  const API_URL = "/api/generateImage"; // Ваш API-эндпоинт
+  let attempts = 3; 
+  const API_URL = "/api/generateImage"; т
 
   while (attempts > 0) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // Тайм-аут 60 секунд
+      const timeoutId = setTimeout(() => controller.abort(), 60000); 
       const response = await fetch(API_URL, {
         method: "POST",
         headers: {
@@ -217,7 +217,7 @@ export default function NFTClaimLanding() {
         console.error("❌ Ошибка API Hugging Face:", errorMessage);
         if (response.status === 503 && attempts > 1) {
           console.warn("⏳ Перегружен сервер, повторная попытка...");
-          await new Promise((res) => setTimeout(res, 5000)); // Ожидание перед повторной попыткой
+          await new Promise((res) => setTimeout(res, 5000)); 
           attempts--;
           continue;
         }
