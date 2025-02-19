@@ -1,6 +1,6 @@
 "use client";
 
-import AxoneAI from "../AxoneAI";
+import AxoneAI from "../pages/AxoneAI";
 
 export default function SyntheticV0PageForDeployment() {
   return <AxoneAI />;
