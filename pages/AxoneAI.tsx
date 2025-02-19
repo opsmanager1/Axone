@@ -200,56 +200,58 @@ export default function NFTClaimLanding() {
 
 
   const generateImage = async (prompt: string) => {
-  setIsGenerating(true);
-  let attempts = 3; 
-  const API_URL = "/api/generateImage";
+    setIsGenerating(true);
+    let attempts = 3; 
+    const API_URL = "/api/generateImage";
 
-  while (attempts > 0) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); 
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+    while (attempts > 0) {
+        try {
+            console.log("Попытка отправки запроса на генерацию изображения...");
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 60000); 
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ prompt }),
+                signal: controller.signal,
+            });
+            clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        const errorJson = await response.json().catch(() => null);
-        const errorMessage = errorJson?.error || `Ошибка ${response.status}: ${response.statusText}`;
-        console.error("❌ Ошибка API Hugging Face:", errorMessage);
-        if (response.status === 503 && attempts > 1) {
-          console.warn("⏳ Перегружен сервер, повторная попытка...");
-          await new Promise((res) => setTimeout(res, 5000)); 
-          attempts--;
-          continue;
+            if (!response.ok) {
+                const errorJson = await response.json().catch(() => null);
+                const errorMessage = errorJson?.error || `Ошибка ${response.status}: ${response.statusText}`;
+                console.error("❌ Ошибка API Hugging Face:", errorMessage);
+                if (response.status === 503 && attempts > 1) {
+                    console.warn("⏳ Перегружен сервер, повторная попытка...");
+                    await new Promise((res) => setTimeout(res, 5000)); 
+                    attempts--;
+                    continue;
+                }
+                throw new Error(errorMessage);
+            }
+
+            const { imageUrl } = await response.json();
+            console.log("✅ Изображение успешно сгенерировано:", imageUrl);
+            setGeneratedImage(imageUrl);
+            break;
+        } catch (error) {
+            console.error("❌ Ошибка во время генерации:", error);
+            if (error.name === "AbortError") {
+                console.error("⏳ Время запроса истекло.");
+            }
+            attempts--;
+
+            if (attempts === 0) {
+                alert("Ошибка генерации изображения: " + (error.message || "Неизвестная ошибка"));
+            }
+        } finally {
+            setIsGenerating(false);
         }
-        throw new Error(errorMessage);
-      }
-
-      const { imageUrl } = await response.json();
-      setGeneratedImage(imageUrl);
-      console.log("✅ Изображение успешно сгенерировано!");
-      break;
-    } catch (error) {
-      console.error("❌ Ошибка во время генерации:", error);
-      if (error.name === "AbortError") {
-        console.error("⏳ Время запроса истекло.");
-      }
-      attempts--;
-
-      if (attempts === 0) {
-        alert("Ошибка генерации изображения: " + (error.message || "Неизвестная ошибка"));
-      }
-    } finally {
-      setIsGenerating(false);
     }
-  }
 };
+
 
 
   const copyToClipboard = async () => {
