@@ -182,8 +182,8 @@ export default function NFTClaimLanding() {
         if (data.tx_response && data.tx_response.code === 0) {
             console.log(`✅ Transaction confirmed! TX: ${txHash}`);
             alert(`✅ Transaction confirmed!\nTX Hash: ${txHash}`);
-            // После подтверждения транзакции добавьте вызов генерации изображения
-            await generateImage(prompt);
+            console.log("Генерация изображения с prompt:", prompt); // Добавьте лог
+            await generateImage(prompt); // Убедитесь, что prompt передается
             return;
         } else if (data.tx_response && data.tx_response.code) {
             console.log(`❌ Transaction failed! TX: ${txHash}`);
@@ -197,15 +197,15 @@ export default function NFTClaimLanding() {
 
 
 
+
   const generateImage = async (prompt: string) => {
-    console.log("Начало генерации изображения с prompt:", prompt);
+    console.log("Начало генерации изображения с prompt:", prompt); // Добавьте лог
     setIsGenerating(true);
     let attempts = 3; 
-    const API_URL = "/api/generateImage";
+    const API_URL = "/api/generateImage"; 
 
     while (attempts > 0) {
         try {
-            console.log("Попытка отправки запроса на генерацию изображения...");
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 60000); 
             const response = await fetch(API_URL, {
@@ -221,9 +221,9 @@ export default function NFTClaimLanding() {
             if (!response.ok) {
                 const errorJson = await response.json().catch(() => null);
                 const errorMessage = errorJson?.error || `Ошибка ${response.status}: ${response.statusText}`;
-                console.error("❌ Ошибка API Hugging Face:", errorMessage);
+                console.error("❌ Ошибка API:", errorMessage); // Обновлено
                 if (response.status === 503 && attempts > 1) {
-                    console.warn("⏳ Перегружен сервер, повторная попытка...");
+                    console.warn("⏳ Сервер перегружен, повторная попытка...");
                     await new Promise((res) => setTimeout(res, 5000)); 
                     attempts--;
                     continue;
@@ -232,8 +232,8 @@ export default function NFTClaimLanding() {
             }
 
             const { imageUrl } = await response.json();
-            console.log("✅ Изображение успешно сгенерировано:", imageUrl);
             setGeneratedImage(imageUrl);
+            console.log("✅ Изображение успешно сгенерировано!", imageUrl); // Добавьте лог
             break;
         } catch (error) {
             console.error("❌ Ошибка во время генерации:", error);
@@ -250,6 +250,7 @@ export default function NFTClaimLanding() {
         }
     }
 };
+
 
 
 
