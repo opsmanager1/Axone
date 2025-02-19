@@ -174,28 +174,30 @@ export default function NFTClaimLanding() {
 };
 
 
-  const waitForTransaction = async (txHash: string) => {
-  while (true) {
-    try {
-      const response = await fetch(`${REST_URL}/cosmos/tx/v1beta1/txs/${txHash}`);
-      const data = await response.json();
-
-      if (data.tx_response && data.tx_response.code === 0) {
-        console.log(`✅ Transaction confirmed! TX: ${txHash}`);
-        alert(`✅ Transaction confirmed!\nTX Hash: ${txHash}`);
-        return;
-      } else if (data.tx_response && data.tx_response.code) {
-        console.log(`❌ Transaction failed! TX: ${txHash}`);
-        alert(`❌ Transaction failed!\nTX Hash: ${txHash}`);
-        return;
-      }
-    } catch (error) {
-      console.error("Error checking transaction status:", error);
+ const waitForTransaction = async (txHash: string) => {
+    for (let i = 0; i < 10; i++) { // Попробуем 10 раз
+        try {
+            const response = await fetch(`${REST_URL}/cosmos/tx/v1beta1/txs/${txHash}`);
+            const data = await response.json();
+            if (data.tx_response) {
+                if (data.tx_response.code === 0) {
+                    console.log(`✅ Transaction confirmed! TX: ${txHash}`);
+                    alert(`✅ Transaction confirmed!\nTX Hash: ${txHash}`);
+                    return;
+                } else {
+                    console.log(`❌ Transaction failed! TX: ${txHash}`);
+                    alert(`❌ Transaction failed!\nTX Hash: ${txHash}`);
+                    return;
+                }
+            }
+        } catch (error) {
+            console.error("Ошибка при ожидании транзакции:", error);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 3000)); // Ждем 3 секунды перед повтором
     }
-
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-  }
+    alert("Не удалось подтвердить транзакцию. Попробуйте еще раз позже.");
 };
+
 
   const generateImage = async (prompt: string) => {
   setIsGenerating(true);
