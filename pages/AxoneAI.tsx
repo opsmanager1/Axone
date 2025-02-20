@@ -383,7 +383,7 @@ export default function NFTClaimLanding() {
             <a href="mailto:opsmanager133@gmail.com" className="text-lg hover:text-green-500 transition-colors">
               Contact
             </a>
-            <a href="https://faucet.axone.xyz" className="text-lg hover:text-red-500 transition-colors">
+            <a href="https://faucet.axone.xyz" target="_blank" rel="noopener noreferrer" className="text-lg hover:text-red-500 transition-colors ">
               Faucet
             </a>
           </div>
