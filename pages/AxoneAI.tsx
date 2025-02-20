@@ -285,17 +285,17 @@ export default function NFTClaimLanding() {
           ) : (
             <div className="flex items-center space-x-2">
               {isCorrectNetwork ? (
-                <>
-                  <span className="text-sm text-gray-700">
+                  <>
+                   <span className={`text-sm ${isDarkMode ? "text-white" : "text-gray-700"}`}>
                     {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                  </span>
-                  <Button onClick={copyToClipboard} variant="outline" className="p-2 bg-gray-900 text-white hover:bg-gray-800 transition-colors" title="Copy address">
-                    {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
-                </>
-              ) : (
-                <span className="text-sm text-red-500">Wrong Network</span>
-              )}
+                   </span>
+                    <Button onClick={copyToClipboard} variant="outline" className="p-2 bg-gray-900 text-white hover:bg-gray-800 transition-colors" title="Copy address">
+                          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                     </>
+                    ) : (
+                      <span className="text-sm text-red-500">Wrong Network</span>
+                    )}
               <Button onClick={handleLogout} variant="outline" className="bg-red-500 hover:bg-red-600 text-white transition-colors">
                 Logout
               </Button>
