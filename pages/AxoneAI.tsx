@@ -15,7 +15,7 @@ const RECIPIENT_ADDRESS = "axone1mtp47d2uyu9g89tfh2ghtey7f9a4lj8f9rg9x4";
 const RPC_URL = "https://api.dentrite.axone.xyz:443/rpc";
 const REST_URL = "https://api.dentrite.axone.xyz";
 
-export default function NFTClaimLanding() {
+export default function AxoneAI() {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [prompt, setPrompt] = useState("");
