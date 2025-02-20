@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -11,7 +10,7 @@ import { SigningStargateClient } from "@cosmjs/stargate";
 
 //const HUGGING_FACE_API_KEY = process.env.HUGGING_FACE_API_KEY;
 const GENERATION_PRICE = 1;
-const AXONE_CHAIN_ID = "axone-dentrite-1"; 
+const AXONE_CHAIN_ID = "axone-dentrite-1";
 const RECIPIENT_ADDRESS = "axone1mtp47d2uyu9g89tfh2ghtey7f9a4lj8f9rg9x4";
 const RPC_URL = "https://api.dentrite.axone.xyz:443/rpc";
 const REST_URL = "https://api.dentrite.axone.xyz";
@@ -143,28 +142,38 @@ export default function NFTClaimLanding() {
       const senderAddress = accounts[0].address;
       console.log(`💳 Sender: ${senderAddress}`);
 
-      const client = await SigningStargateClient.connectWithSigner(RPC_URL, offlineSigner);
+      const client = await SigningStargateClient.connectWithSigner(
+        RPC_URL,
+        offlineSigner
+      );
 
-      const amount = [{ denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() }];
+      const amount = [
+        { denom: "uaxone", amount: (GENERATION_PRICE * 10 ** 6).toString() },
+      ];
       const fee = {
         amount: [{ denom: "uaxone", amount: "5000" }],
         gas: "200000",
       };
 
-      const result = await client.sendTokens(senderAddress, RECIPIENT_ADDRESS, amount, fee, "");
+      const result = await client.sendTokens(
+        senderAddress,
+        RECIPIENT_ADDRESS,
+        amount,
+        fee,
+        ""
+      );
       console.log("✅ Transaction result:", result);
 
       if (result.code !== undefined && result.code !== 0) {
+        console.error(`Failed to send tx: ${result.rawLog}`); // Выводим лог ошибки
         throw new Error(`Failed to send tx: ${result.rawLog}`);
       }
 
       alert("✅ Transaction sent successfully!");
 
       await waitForTransaction(result.transactionHash);
-
       console.log("🖼️ Generating image...");
       await generateImage(prompt);
-
     } catch (error) {
       console.error("❌ Transaction error:", error);
       alert("❌ Transaction failed! Check console for details.");
@@ -175,12 +184,16 @@ export default function NFTClaimLanding() {
 
   const waitForTransaction = async (txHash: string) => {
     while (true) {
-      const response = await fetch(`${REST_URL}/cosmos/tx/v1beta1/txs/${txHash}`);
+      const response = await fetch(
+        `${REST_URL}/cosmos/tx/v1beta1/txs/${txHash}`
+      );
       const data = await response.json();
 
       if (data.tx_response && data.tx_response.code === 0) {
         console.log(`✅ Transaction confirmed! TX: ${txHash}`);
         alert(`✅ Transaction confirmed!\nTX Hash: ${txHash}`);
+        console.log("Генерация изображения с prompt:", prompt); // Добавьте лог
+        await generateImage(prompt); // Убедитесь, что prompt передается
         return;
       } else if (data.tx_response && data.tx_response.code) {
         console.log(`❌ Transaction failed! TX: ${txHash}`);
@@ -188,62 +201,74 @@ export default function NFTClaimLanding() {
         return;
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 3000)); 
+      await new Promise((resolve) => setTimeout(resolve, 3000));
     }
   };
 
-  const generateImage = async (prompt: string) => {
-  setIsGenerating(true);
-  let attempts = 3; 
-  const API_URL = "/pages/api/generateImage"; т
+  const generateImage = async (prompt) => {
+    setIsGenerating(true);
+    let attempts = 3;
+    const API_URL = "/api/generateImage";
 
-  while (attempts > 0) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); 
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ prompt }),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+    while (attempts > 0) {
+      try {
+        console.log(`📤 Отправка запроса в API (${attempts} попыток осталось)...`);
 
-      if (!response.ok) {
-        const errorJson = await response.json().catch(() => null);
-        const errorMessage = errorJson?.error || `Ошибка ${response.status}: ${response.statusText}`;
-        console.error("❌ Ошибка API Hugging Face:", errorMessage);
-        if (response.status === 503 && attempts > 1) {
-          console.warn("⏳ Перегружен сервер, повторная попытка...");
-          await new Promise((res) => setTimeout(res, 5000)); 
-          attempts--;
-          continue;
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+          console.error("⏳ Время запроса истекло!");
+        }, 90000); // Увеличен таймаут до 90 секунд
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ prompt }),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        console.log("📥 Ответ от API получен");
+
+        if (!response.ok) {
+          const errorJson = await response.json().catch(() => null);
+          const errorMessage =
+            errorJson?.error || `Ошибка ${response.status}: ${response.statusText}`;
+          console.error("❌ Ошибка API:", errorMessage);
+
+          if ((response.status === 503 || response.status === 504) && attempts > 1) {
+            console.warn("⏳ Сервер перегружен, повторная попытка через 15 секунд...");
+            await new Promise((res) => setTimeout(res, 15000)); // Увеличенная задержка между попытками
+            attempts--;
+            continue;
+          }
+
+          throw new Error(errorMessage);
         }
-        throw new Error(errorMessage);
-      }
 
-      const { imageUrl } = await response.json();
-      setGeneratedImage(imageUrl);
-      console.log("✅ Изображение успешно сгенерировано!");
-      break;
-    } catch (error) {
-      console.error("❌ Ошибка во время генерации:", error);
-      if (error.name === "AbortError") {
-        console.error("⏳ Время запроса истекло.");
-      }
-      attempts--;
+        const { imageUrl } = await response.json();
+        console.log("✅ Изображение успешно сгенерировано!", imageUrl);
 
-      if (attempts === 0) {
-        alert("Ошибка генерации изображения: " + (error.message || "Неизвестная ошибка"));
+        setGeneratedImage(imageUrl);
+        break;
+      } catch (error) {
+        console.error("❌ Ошибка во время генерации:", error);
+        if (error.name === "AbortError") {
+          console.error("⏳ Время запроса истекло.");
+        }
+        attempts--;
+
+        if (attempts === 0) {
+          alert("Ошибка генерации изображения: " + (error.message || "Неизвестная ошибка"));
+        }
+      } finally {
+        setIsGenerating(false);
       }
-    } finally {
-      setIsGenerating(false);
     }
-  }
-};
-
+  };
 
   const copyToClipboard = async () => {
     try {
@@ -265,8 +290,8 @@ export default function NFTClaimLanding() {
     <div className={`flex flex-col min-h-screen ${isDarkMode ? "bg-black" : "bg-white"}`}>
       <nav
         className={`flex justify-between items-center p-4 ${
-  isDarkMode ? "bg-[#003366]" : "bg-[#f8f9fa]"
-} text-black sticky top-0 z-10 rounded-b-lg shadow-md`}
+          isDarkMode ? "bg-[#003366]" : "bg-[#f8f9fa]"
+        } text-black sticky top-0 z-10 rounded-b-lg shadow-md`}
       >
         <div className="flex items-center space-x-2">
           <Avatar>
@@ -337,17 +362,17 @@ export default function NFTClaimLanding() {
               className={`${isDarkMode ? "bg-gray-800 text-white" : "bg-white text-black"} border-gray-600`}
             />
             <Button
-  onClick={handleGenerateImage}
-  disabled={isGenerating || !prompt || !isWalletConnected || !isCorrectNetwork}
-  variant={isDarkMode ? "outline" : "default"}
-  className={`border ${
-    isDarkMode
-      ? "bg-gray-800 hover:bg-gray-700 text-white border-gray-600"
-      : "bg-gray-100 hover:bg-gray-200 text-black border-gray-300"
-  } transition-colors`}
->
-  {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Generate"}
-</Button>
+              onClick={handleGenerateImage}
+              disabled={isGenerating || !prompt || !isWalletConnected || !isCorrectNetwork}
+              variant={isDarkMode ? "outline" : "default"}
+              className={`border ${
+                isDarkMode
+                  ? "bg-gray-800 hover:bg-gray-700 text-white border-gray-600"
+                  : "bg-gray-100 hover:bg-gray-200 text-black border-gray-300"
+              } transition-colors`}
+            >
+              {isGenerating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Generate"}
+            </Button>
           </div>
           {!isCorrectNetwork && isWalletConnected && (
             <p className="text-red-500 text-center">
