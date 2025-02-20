@@ -24,7 +24,7 @@ export default function NFTClaimLanding() {
   const [walletAddress, setWalletAddress] = useState("");
   const [isCopied, setIsCopied] = useState(false);
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); // Added for UI error display
+  const [errorMessage, setErrorMessage] = useState(""); 
 
   const checkNetwork = async () => {
     if (typeof window.keplr !== "undefined") {
