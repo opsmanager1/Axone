@@ -37,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const imageBase64 = Buffer.from(imageBuffer).toString("base64");
 
     // Отправляем base64-изображение
-    res.status(200).json({ image: `data:image/png;base64,${imageBase64}` });
+    res.status(200).json({ imageUrl: `data:image/png;base64,${imageBase64}` });
   } catch (error) {
     console.error("Error generating image:", error);
     res.status(500).json({ error: "Internal server error" });
