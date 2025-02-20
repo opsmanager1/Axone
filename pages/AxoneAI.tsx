@@ -15,7 +15,7 @@ const RECIPIENT_ADDRESS = "axone1mtp47d2uyu9g89tfh2ghtey7f9a4lj8f9rg9x4";
 const RPC_URL = "https://api.dentrite.axone.xyz:443/rpc";
 const REST_URL = "https://api.dentrite.axone.xyz";
 
-export default function AxoneAI() {
+export default function NFTClaimLanding() {
   const [isWalletConnected, setIsWalletConnected] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [prompt, setPrompt] = useState("");
@@ -24,7 +24,13 @@ export default function AxoneAI() {
   const [walletAddress, setWalletAddress] = useState("");
   const [isCopied, setIsCopied] = useState(false);
   const [isCorrectNetwork, setIsCorrectNetwork] = useState(false);
-  const [errorMessage, setErrorMessage] = useState(""); 
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isAnimating, setIsAnimating] = useState(false); // Для анимации текста
+
+  useEffect(() => {
+    // Запускаем анимацию при монтировании или переключении темы
+    setIsAnimating(true);
+  }, [isDarkMode]); // Перезапускаем при смене темы
 
   const checkNetwork = async () => {
     if (typeof window.keplr !== "undefined") {
@@ -159,7 +165,7 @@ export default function AxoneAI() {
 
       if (data.tx_response && data.tx_response.code === 0) {
         console.log(`✅ Transaction confirmed! TX: ${txHash}`);
-        setErrorMessage(""); // Clear previous errors
+        setErrorMessage(""); // Очищаем ошибки перед генерацией
         try {
           await generateImage(prompt);
         } catch (error) {
@@ -178,75 +184,76 @@ export default function AxoneAI() {
   };
 
   const generateImage = async (prompt) => {
-  setIsGenerating(true);
-  setErrorMessage(""); // Очищаем сообщение об ошибке перед началом
-  let attempts = 3;
-  const API_URL = "/api/generateImage";
+    setIsGenerating(true);
+    setErrorMessage(""); // Очищаем сообщение об ошибке перед началом
+    let attempts = 3;
+    const API_URL = "/api/generateImage";
 
-  while (attempts > 0) {
-    try {
-      console.log(`📤 Sending request to API (${attempts} attempts left)...`);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => {
-        controller.abort();
-        console.error("⏳ Request timed out!");
-      }, 90000);
+    while (attempts > 0) {
+      try {
+        console.log(`📤 Sending request to API (${attempts} attempts left)...`);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => {
+          controller.abort();
+          console.error("⏳ Request timed out!");
+        }, 90000);
 
-      const response = await fetch(API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-        signal: controller.signal,
-      });
+        const response = await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt }),
+          signal: controller.signal,
+        });
 
-      clearTimeout(timeoutId);
-      console.log("📥 Response received from API:", response.status);
+        clearTimeout(timeoutId);
+        console.log("📥 Response received from API:", response.status);
 
-      if (!response.ok) {
-        const errorJson = await response.json().catch(() => null);
-        const errorMessage = errorJson?.error || `Error ${response.status}: ${response.statusText}`;
-        console.error("❌ API error:", errorMessage);
+        if (!response.ok) {
+          const errorJson = await response.json().catch(() => null);
+          const errorMessage = errorJson?.error || `Error ${response.status}: ${response.statusText}`;
+          console.error("❌ API error:", errorMessage);
 
-        if ((response.status === 503 || response.status === 504) && attempts > 1) {
-          console.warn("⏳ Server overloaded, retrying in 15 seconds...");
-          setErrorMessage(`Server unavailable (${response.status}). Retrying in 15 seconds...`);
-          await new Promise((res) => setTimeout(res, 15000));
-          attempts--;
-          continue;
+          if ((response.status === 503 || response.status === 504) && attempts > 1) {
+            console.warn("⏳ Server overloaded, retrying in 15 seconds...");
+            setErrorMessage(`Server unavailable (${response.status}). Retrying in 15 seconds...`);
+            await new Promise((res) => setTimeout(res, 15000));
+            attempts--;
+            continue;
+          }
+
+          throw new Error(errorMessage);
         }
 
-        throw new Error(errorMessage);
-      }
+        const data = await response.json();
+        console.log("📦 Full API response:", data);
+        const { imageUrl } = data;
+        console.log("🖼️ Extracted imageUrl:", imageUrl);
 
-      const data = await response.json();
-      console.log("📦 Full API response:", data);
-      const { imageUrl } = data;
-      console.log("🖼️ Extracted imageUrl:", imageUrl);
+        if (!imageUrl) {
+          throw new Error("No imageUrl in API response");
+        }
 
-      if (!imageUrl) {
-        throw new Error("No imageUrl in API response");
-      }
+        setGeneratedImage(imageUrl);
+        setErrorMessage(""); // Явно очищаем ошибку при успешной генерации
+        console.log("🔍 Error message cleared after successful generation");
+        break;
+      } catch (error) {
+        console.error("❌ Error during generation:", error);
+        if (error.name === "AbortError") {
+          setErrorMessage("Request timed out. Please try again.");
+        } else {
+          setErrorMessage(`Error: ${error.message || "Unknown error"}`);
+        }
+        attempts--;
 
-      setGeneratedImage(imageUrl);
-      setErrorMessage(""); // Очищаем ошибку при успешной генерации
-      break;
-    } catch (error) {
-      console.error("❌ Error during generation:", error);
-      if (error.name === "AbortError") {
-        setErrorMessage("Request timed out. Please try again.");
-      } else {
-        setErrorMessage(`Error: ${error.message}`);
+        if (attempts === 0) {
+          setErrorMessage("All attempts to generate the image have failed. Please try again later.");
+        }
+      } finally {
+        setIsGenerating(false);
       }
-      attempts--;
-
-      if (attempts === 0) {
-        setErrorMessage("All attempts to generate the image have failed. Please try again later.");
-      }
-    } finally {
-      setIsGenerating(false);
     }
-  }
-};
+  };
 
   const copyToClipboard = async () => {
     try {
@@ -286,17 +293,17 @@ export default function AxoneAI() {
           ) : (
             <div className="flex items-center space-x-2">
               {isCorrectNetwork ? (
-                  <>
-                   <span className={`text-sm ${isDarkMode ? "text-white" : "text-gray-700"}`}>
+                <>
+                  <span className={`text-sm ${isDarkMode ? "text-white" : "text-gray-700"}`}>
                     {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
-                   </span>
-                    <Button onClick={copyToClipboard} variant="outline" className="p-2 bg-gray-900 text-white hover:bg-gray-800 transition-colors" title="Copy address">
-                          {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                    </Button>
-                     </>
-                    ) : (
-                      <span className="text-sm text-red-500">Wrong Network</span>
-                    )}
+                  </span>
+                  <Button onClick={copyToClipboard} variant="outline" className="p-2 bg-gray-900 text-white hover:bg-gray-800 transition-colors" title="Copy address">
+                    {isCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </>
+              ) : (
+                <span className="text-sm text-red-500">Wrong Network</span>
+              )}
               <Button onClick={handleLogout} variant="outline" className="bg-red-500 hover:bg-red-600 text-white transition-colors">
                 Logout
               </Button>
@@ -306,7 +313,13 @@ export default function AxoneAI() {
       </nav>
 
       <section className={`container mx-auto px-4 py-16 ${isDarkMode ? "text-white" : "text-black"}`}>
-        <h2 className="text-3xl font-semibold mb-8 text-center">Generate Your AI Art</h2>
+        <h2
+          className={`text-3xl font-semibold mb-8 text-center ${
+            isAnimating ? "animate-title" : ""
+          } ${isDarkMode ? "text-white" : "text-black"}`}
+        >
+          Generate Your AI Art
+        </h2>
         <div className="max-w-2xl mx-auto space-y-6">
           <div className="mb-6 text-center">
             <p className="mb-2">Create unique AI-generated art with our advanced image generation model.</p>
@@ -382,9 +395,6 @@ export default function AxoneAI() {
             </a>
             <a href="mailto:opsmanager133@gmail.com" className="text-lg hover:text-green-500 transition-colors">
               Contact
-            </a>
-            <a href="https://faucet.axone.xyz" target="_blank" rel="noopener noreferrer" className="text-lg hover:text-red-500 transition-colors ">
-              Faucet
             </a>
           </div>
         </div>
