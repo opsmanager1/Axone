@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 
 const HUGGING_FACE_API_KEY = process.env.HUGGING_FACE_API_KEY;
+console.log("HUGGING_FACE_API_KEY:", HUGGING_FACE_API_KEY ? "Loaded" : "Not found");
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
