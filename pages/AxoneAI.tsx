@@ -178,74 +178,75 @@ export default function NFTClaimLanding() {
   };
 
   const generateImage = async (prompt) => {
-    setIsGenerating(true);
-    setErrorMessage("");
-    let attempts = 3;
-    const API_URL = "/api/generateImage";
+  setIsGenerating(true);
+  setErrorMessage(""); // Очищаем сообщение об ошибке перед началом
+  let attempts = 3;
+  const API_URL = "/api/generateImage";
 
-    while (attempts > 0) {
-      try {
-        console.log(`📤 Sending request to API (${attempts} attempts left)...`);
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => {
-          controller.abort();
-          console.error("⏳ Request timed out!");
-        }, 90000);
+  while (attempts > 0) {
+    try {
+      console.log(`📤 Sending request to API (${attempts} attempts left)...`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        console.error("⏳ Request timed out!");
+      }, 90000);
 
-        const response = await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ prompt }),
-          signal: controller.signal,
-        });
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt }),
+        signal: controller.signal,
+      });
 
-        clearTimeout(timeoutId);
-        console.log("📥 Response received from API:", response.status);
+      clearTimeout(timeoutId);
+      console.log("📥 Response received from API:", response.status);
 
-        if (!response.ok) {
-          const errorJson = await response.json().catch(() => null);
-          const errorMessage = errorJson?.error || `Error ${response.status}: ${response.statusText}`;
-          console.error("❌ API error:", errorMessage);
+      if (!response.ok) {
+        const errorJson = await response.json().catch(() => null);
+        const errorMessage = errorJson?.error || `Error ${response.status}: ${response.statusText}`;
+        console.error("❌ API error:", errorMessage);
 
-          if ((response.status === 503 || response.status === 504) && attempts > 1) {
-            console.warn("⏳ Server overloaded, retrying in 15 seconds...");
-            setErrorMessage(`Server unavailable (${response.status}). Retrying in 15 seconds...`);
-            await new Promise((res) => setTimeout(res, 15000));
-            attempts--;
-            continue;
-          }
-
-          throw new Error(errorMessage);
+        if ((response.status === 503 || response.status === 504) && attempts > 1) {
+          console.warn("⏳ Server overloaded, retrying in 15 seconds...");
+          setErrorMessage(`Server unavailable (${response.status}). Retrying in 15 seconds...`);
+          await new Promise((res) => setTimeout(res, 15000));
+          attempts--;
+          continue;
         }
 
-        const data = await response.json();
-        console.log("📦 Full API response:", data);
-        const { imageUrl } = data;
-        console.log("🖼️ Extracted imageUrl:", imageUrl);
-
-        if (!imageUrl) {
-          throw new Error("No imageUrl in API response");
-        }
-
-        setGeneratedImage(imageUrl);
-        break;
-      } catch (error) {
-        console.error("❌ Error during generation:", error);
-        if (error.name === "AbortError") {
-          setErrorMessage("Request timed out. Please try again.");
-        } else {
-          setErrorMessage(`Error: ${error.message}`);
-        }
-        attempts--;
-
-        if (attempts === 0) {
-          setErrorMessage("All attempts to generate the image have failed. Please try again later.");
-        }
-      } finally {
-        setIsGenerating(false);
+        throw new Error(errorMessage);
       }
+
+      const data = await response.json();
+      console.log("📦 Full API response:", data);
+      const { imageUrl } = data;
+      console.log("🖼️ Extracted imageUrl:", imageUrl);
+
+      if (!imageUrl) {
+        throw new Error("No imageUrl in API response");
+      }
+
+      setGeneratedImage(imageUrl);
+      setErrorMessage(""); // Очищаем ошибку при успешной генерации
+      break;
+    } catch (error) {
+      console.error("❌ Error during generation:", error);
+      if (error.name === "AbortError") {
+        setErrorMessage("Request timed out. Please try again.");
+      } else {
+        setErrorMessage(`Error: ${error.message}`);
+      }
+      attempts--;
+
+      if (attempts === 0) {
+        setErrorMessage("All attempts to generate the image have failed. Please try again later.");
+      }
+    } finally {
+      setIsGenerating(false);
     }
-  };
+  }
+};
 
   const copyToClipboard = async () => {
     try {
